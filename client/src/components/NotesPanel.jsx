@@ -20,7 +20,7 @@ function NoteEditor({ initial = '', submitLabel, onSave, onCancel }) {
 
   return (
     <form className="note-editor" onSubmit={handleSubmit} noValidate>
-      <textarea rows={3} value={text} onChange={(event) => setText(event.target.value)} aria-label="Note" />
+      <textarea rows={3} value={text} placeholder="Write advice or observations for the patient" onChange={(event) => setText(event.target.value)} aria-label="Note" />
       <div className="form-actions">
         <button type="submit">{submitLabel}</button>
         {onCancel && (
@@ -35,7 +35,7 @@ function NoteEditor({ initial = '', submitLabel, onSave, onCancel }) {
 }
 
 export default function NotesPanel({ patientId }) {
-  const [notes, setNotes] = useState([]);
+  const [notes, setNotes] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState(null);
 
@@ -68,11 +68,11 @@ export default function NotesPanel({ patientId }) {
 
   return (
     <section className="panel">
-      <h2>Your notes</h2>
+      <h2>Your notes for this patient</h2>
       <NoteEditor submitLabel="Add note" onSave={addNote} />
       <FormError error={error} />
-      {notes.length === 0 ? (
-        <p className="empty">No notes yet. The patient sees every note you add.</p>
+      {notes === null ? null : notes.length === 0 ? (
+        <p className="empty">No notes yet. The patient can read every note you add here.</p>
       ) : (
         <ul className="notes">
           {notes.map((note) => (

@@ -1,16 +1,18 @@
-import { formatDate } from '../constants';
+import { SLOTS, formatDate } from '../constants';
 
 function rangeLabel({ from, to }) {
   return from === to ? formatDate(from) : `${formatDate(from)} – ${formatDate(to)}`;
 }
 
-function Stats({ title, summary, children }) {
+function ReportCard({ title, summary, primary = false, emptyText, children }) {
   return (
-    <section className="report-card">
-      <h3>{title}</h3>
-      <p className="report-range">{rangeLabel(summary)}</p>
+    <section className={`report-card${primary ? ' is-primary' : ''}`}>
+      <header>
+        <h2>{title}</h2>
+        <p>{rangeLabel(summary)}</p>
+      </header>
       {summary.count === 0 ? (
-        <p className="empty">No readings in this period.</p>
+        <p className="empty">{emptyText}</p>
       ) : (
         <dl className="stats">
           <div>
@@ -36,23 +38,30 @@ function Stats({ title, summary, children }) {
   );
 }
 
+function slotColor(key) {
+  return SLOTS.find((slot) => slot.key === key)?.color;
+}
+
 export default function ReportView({ report }) {
+  const { daily } = report;
   return (
-    <div className="report-grid">
-      <Stats title="Daily" summary={report.daily}>
-        {report.daily.readings.length > 0 && (
-          <ul className="day-readings">
-            {report.daily.readings.map((reading) => (
-              <li key={reading.id}>
+    <div className="report-layout">
+      <ReportCard title="Daily" summary={daily} primary emptyText="No readings on this day.">
+        {daily.readings.length > 0 && (
+          <ul className="day-readings" aria-label="Readings on this day">
+            {daily.readings.map((reading) => (
+              <li key={reading.id} style={{ '--slot': slotColor(reading.slot) }}>
                 <span>{reading.slotLabel}</span>
                 <strong>{reading.value} mg/dl</strong>
               </li>
             ))}
           </ul>
         )}
-      </Stats>
-      <Stats title="Month to date" summary={report.monthToDate} />
-      <Stats title="Previous month" summary={report.monthly} />
+      </ReportCard>
+      <div className="report-side">
+        <ReportCard title="Month to date" summary={report.monthToDate} emptyText="No readings so far this month." />
+        <ReportCard title="Previous month" summary={report.monthly} emptyText="No readings last month." />
+      </div>
     </div>
   );
 }

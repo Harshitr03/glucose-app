@@ -1,19 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../../api';
+import { monthRange, todayIso } from '../../constants';
 import ReportSection from '../../components/ReportSection';
-import ReadingsTable from '../../components/ReadingsTable';
-import Pagination from '../../components/Pagination';
+import Logbook from '../../components/Logbook';
+import MonthNav from '../../components/MonthNav';
+import OrderToggle from '../../components/OrderToggle';
 import NotesPanel from '../../components/NotesPanel';
 import FormError from '../../components/FormError';
-
-const LIMIT = 20;
 
 export default function PatientDetailPage() {
   const { id } = useParams();
   const [patient, setPatient] = useState(null);
-  const [readings, setReadings] = useState({ readings: [], total: 0 });
-  const [page, setPage] = useState(1);
+  const [month, setMonth] = useState(todayIso().slice(0, 7));
+  const [order, setOrder] = useState('oldest');
+  const [monthReadings, setMonthReadings] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -26,38 +27,47 @@ export default function PatientDetailPage() {
       .catch(setError);
   }, [id]);
 
-  const loadReadings = useCallback(() => {
-    api(`/patient/readings?id=${id}&page=${page}&limit=${LIMIT}`).then(setReadings).catch(setError);
-  }, [id, page]);
-
   useEffect(() => {
-    if (patient) loadReadings();
-  }, [patient, loadReadings]);
+    if (!patient) return;
+    const { from, to } = monthRange(month);
+    api(`/patient/readings?id=${id}&from=${from}&to=${to}&limit=200`)
+      .then((data) => setMonthReadings(data.readings))
+      .catch(setError);
+  }, [patient, id, month]);
 
   if (error) {
     return (
       <>
         <FormError error={error} />
-        <Link to="/patients">Back to patients</Link>
+        <Link to="/patients" className="back-link">Back to patients</Link>
       </>
     );
   }
-  if (!patient) return <p>Loading…</p>;
+  if (!patient) return <p className="page-loading">Loading…</p>;
 
   return (
     <>
-      <Link to="/patients">Back to patients</Link>
-      <h1>{patient.name}</h1>
-      <p className="subtle">{patient.email}</p>
+      <header className="page-header">
+        <div>
+          <Link to="/patients" className="back-link">Back to patients</Link>
+          <h1>{patient.name}</h1>
+          <p className="subtle">{patient.email}</p>
+        </div>
+      </header>
 
       <ReportSection reportsPath={`/patient/reports?id=${id}&`} readingsPath={`/patient/readings?id=${id}&`} />
 
       <NotesPanel patientId={patient.id} />
 
-      <section className="panel">
-        <h2>All readings</h2>
-        <ReadingsTable readings={readings.readings} emptyText="This patient has not added any readings yet." />
-        <Pagination page={page} limit={LIMIT} total={readings.total} onChange={setPage} />
+      <section className="section" aria-labelledby="logbook-heading">
+        <div className="section-header">
+          <h2 id="logbook-heading">Logbook</h2>
+          <div className="row-actions">
+            <OrderToggle order={order} onChange={setOrder} />
+            <MonthNav month={month} onChange={setMonth} />
+          </div>
+        </div>
+        <Logbook readings={monthReadings} order={order} emptyText="No readings this month." />
       </section>
     </>
   );

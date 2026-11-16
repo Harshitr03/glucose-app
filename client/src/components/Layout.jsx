@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import BrandMark from './BrandMark';
 
 const LINKS = {
   patient: [
@@ -16,8 +17,11 @@ export default function Layout({ children }) {
   return (
     <div className="app">
       <header className="topbar">
-        <span className="brand">Sweety</span>
-        <nav>
+        <Link to="/" className="brand">
+          <BrandMark />
+          Sweety
+        </Link>
+        <nav aria-label="Main">
           {LINKS[user.role].map((link) => (
             <NavLink key={link.to} to={link.to}>
               {link.label}

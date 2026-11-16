@@ -7,37 +7,32 @@ import FormError from './FormError';
 
 export default function ReportSection({ reportsPath, readingsPath }) {
   const [date, setDate] = useState(todayIso());
-  const [report, setReport] = useState(null);
-  const [monthReadings, setMonthReadings] = useState([]);
-  const [error, setError] = useState(null);
-
-  const monthStart = `${date.slice(0, 8)}01`;
+  const [data, setData] = useState({ report: null, monthReadings: null, error: null });
 
   useEffect(() => {
     if (!date) return;
-    setError(null);
+    const monthStart = `${date.slice(0, 8)}01`;
     Promise.all([
       api(`${reportsPath}date=${date}`),
       api(`${readingsPath}from=${monthStart}&to=${date}&limit=200`),
     ])
-      .then(([reportData, readingData]) => {
-        setReport(reportData);
-        setMonthReadings(readingData.readings);
-      })
-      .catch(setError);
-  }, [date, monthStart, reportsPath, readingsPath]);
+      .then(([report, readingData]) => setData({ report, monthReadings: readingData.readings, error: null }))
+      .catch((error) => setData((previous) => ({ ...previous, error })));
+  }, [date, reportsPath, readingsPath]);
 
   return (
     <>
-      <label className="date-picker">
-        Report date
-        <input type="date" value={date} max={todayIso()} onChange={(event) => setDate(event.target.value)} />
-      </label>
-      <FormError error={error} />
-      {report && <ReportView report={report} />}
-      <section className="panel">
-        <h2>This month</h2>
-        <MonthChart readings={monthReadings} from={monthStart} to={date} />
+      <div className="report-toolbar">
+        <label>
+          Report date
+          <input type="date" value={date} max={todayIso()} onChange={(event) => setDate(event.target.value)} />
+        </label>
+      </div>
+      <FormError error={data.error} />
+      {data.report && <ReportView report={data.report} />}
+      <section className="panel" aria-labelledby="chart-heading">
+        <h2 id="chart-heading">Readings this month</h2>
+        {data.monthReadings && <MonthChart readings={data.monthReadings} to={date} />}
       </section>
     </>
   );

@@ -4,7 +4,7 @@ import ReportSection from '../../components/ReportSection';
 import { formatDate } from '../../constants';
 
 export default function ReportsPage() {
-  const [notes, setNotes] = useState([]);
+  const [notes, setNotes] = useState(null);
 
   useEffect(() => {
     api('/notes').then((data) => setNotes(data.notes)).catch(() => setNotes([]));
@@ -12,12 +12,14 @@ export default function ReportsPage() {
 
   return (
     <>
-      <h1>Reports</h1>
+      <header className="page-header">
+        <h1>Reports</h1>
+      </header>
       <ReportSection reportsPath="/reports?" readingsPath="/readings?" />
-      <section className="panel">
-        <h2>Notes from your doctors</h2>
-        {notes.length === 0 ? (
-          <p className="empty">No notes yet. Notes your doctor writes will appear here.</p>
+      <section className="panel" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">Notes from your doctors</h2>
+        {notes === null ? null : notes.length === 0 ? (
+          <p className="empty">No notes yet. When a doctor writes a note for you, it appears here.</p>
         ) : (
           <ul className="notes">
             {notes.map((note) => (
