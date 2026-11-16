@@ -4,6 +4,7 @@ const config = require('./config');
 const { query } = require('./db/pool');
 const HttpError = require('./utils/httpError');
 const authRoutes = require('./routes/auth');
+const readingRoutes = require('./routes/readings');
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/readings', readingRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found.' });

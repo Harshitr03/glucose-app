@@ -18,6 +18,7 @@ const config = {
   databaseUrl: isTest ? required('TEST_DATABASE_URL') : required('DATABASE_URL'),
   jwtSecret: required('JWT_SECRET'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  timezone: process.env.APP_TIMEZONE || 'Asia/Kolkata',
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
 };
 
