@@ -55,6 +55,7 @@ function validateListQuery(query = {}) {
 }
 
 function parseId(raw) {
+  if (raw === undefined || raw === '') throw new HttpError(400, 'Reading id is required.', 'id');
   const id = Number(raw);
   if (!Number.isInteger(id) || id < 1) throw new HttpError(404, 'Reading not found.');
   return id;

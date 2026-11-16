@@ -86,12 +86,12 @@ describe('daily limits', () => {
   });
 });
 
-describe('PUT /api/readings/:id', () => {
+describe('PUT /api/reading?id=', () => {
   test('can change the value while keeping the same slot', async () => {
     const { body } = await addReading(reading);
 
     const res = await request(app)
-      .put(`/api/readings/${body.reading.id}`)
+      .put(`/api/reading?id=${body.reading.id}`)
       .set('Authorization', patient.auth)
       .send({ ...reading, value: 155 });
 
@@ -104,7 +104,7 @@ describe('PUT /api/readings/:id', () => {
     const { body } = await addReading(reading);
 
     const res = await request(app)
-      .put(`/api/readings/${body.reading.id}`)
+      .put(`/api/reading?id=${body.reading.id}`)
       .set('Authorization', patient.auth)
       .send({ ...reading, slot: 'after_dinner' });
 
@@ -120,10 +120,10 @@ describe('ownership', () => {
 
     const list = await request(app).get('/api/readings').set('Authorization', other.auth);
     const edit = await request(app)
-      .put(`/api/readings/${body.reading.id}`)
+      .put(`/api/reading?id=${body.reading.id}`)
       .set('Authorization', other.auth)
       .send(reading);
-    const remove = await request(app).delete(`/api/readings/${body.reading.id}`).set('Authorization', other.auth);
+    const remove = await request(app).delete(`/api/reading?id=${body.reading.id}`).set('Authorization', other.auth);
 
     expect(list.body.readings).toEqual([]);
     expect(edit.status).toBe(404);
@@ -156,14 +156,24 @@ describe('GET /api/readings', () => {
   });
 });
 
-describe('DELETE /api/readings/:id', () => {
+describe('DELETE /api/reading?id=', () => {
   test('deletes the reading', async () => {
     const { body } = await addReading(reading);
 
-    const res = await request(app).delete(`/api/readings/${body.reading.id}`).set('Authorization', patient.auth);
+    const res = await request(app).delete(`/api/reading?id=${body.reading.id}`).set('Authorization', patient.auth);
     const list = await request(app).get('/api/readings').set('Authorization', patient.auth);
 
     expect(res.status).toBe(204);
     expect(list.body.total).toBe(0);
+  });
+});
+
+describe('id query parameter', () => {
+  test.each([
+    ['missing', '/api/reading', 400],
+    ['not a number', '/api/reading?id=abc', 404],
+  ])('handles an id that is %s', async (_, url, status) => {
+    const res = await request(app).delete(url).set('Authorization', patient.auth);
+    expect(res.status).toBe(status);
   });
 });
