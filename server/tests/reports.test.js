@@ -67,20 +67,21 @@ describe('GET /api/reports', () => {
       highest: 101,
       lowest: 100,
       average: 100.3,
+      inRange: 3,
       readings: [
         { id: 2, slot: 'morning_fasting', slotLabel: 'Morning (fasting)', value: 100 },
         { id: 1, slot: 'after_lunch', slotLabel: 'After lunch', value: 101 },
         { id: 3, slot: 'after_dinner', slotLabel: 'After dinner', value: 100 },
       ],
     });
-    expect(res.body.monthToDate).toMatchObject({ count: 4, highest: 250, lowest: 100, average: 137.8 });
+    expect(res.body.monthToDate).toMatchObject({ count: 4, highest: 250, lowest: 100, average: 137.8, inRange: 3 });
     expect(res.body.monthly).toMatchObject({ from: '2026-09-01', to: '2026-09-30', count: 2, average: 85 });
   });
 
   test('returns empty stats when there are no readings', async () => {
     const res = await getReports('2026-10-15');
 
-    expect(res.body.daily).toMatchObject({ count: 0, highest: null, lowest: null, average: null, readings: [] });
+    expect(res.body.daily).toMatchObject({ count: 0, highest: null, lowest: null, average: null, inRange: 0, readings: [] });
     expect(res.body.monthly.count).toBe(0);
   });
 

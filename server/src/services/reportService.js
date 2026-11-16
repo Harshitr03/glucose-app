@@ -2,15 +2,19 @@ const { query } = require('../db/pool');
 const { reportRanges } = require('../utils/dates');
 const { SLOT_KEYS, slotLabel } = require('../constants/slots');
 
+const TARGET_LOW = 70;
+const TARGET_HIGH = 180;
+
 async function summarize(userId, { from, to }) {
   const { rows } = await query(
     `SELECT count(*)::int AS count,
             max(value) AS highest,
             min(value) AS lowest,
-            round(avg(value), 1)::float AS average
+            round(avg(value), 1)::float AS average,
+            count(*) FILTER (WHERE value BETWEEN $4 AND $5)::int AS "inRange"
      FROM readings
      WHERE user_id = $1 AND reading_date BETWEEN $2 AND $3`,
-    [userId, from, to],
+    [userId, from, to, TARGET_LOW, TARGET_HIGH],
   );
   return { from, to, ...rows[0] };
 }
