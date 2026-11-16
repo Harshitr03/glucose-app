@@ -1,14 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { formatMonth, shiftMonth, todayIso } from '../constants';
+import { formatMonth, shiftDay, shiftMonth, todayIso } from '../constants';
 import Chevron from './Chevron';
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
-function shiftDay(iso, delta) {
-  const date = new Date(`${iso}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + delta);
-  return date.toISOString().slice(0, 10);
-}
 
 function formatLong(iso) {
   if (!iso) return 'Choose a date';

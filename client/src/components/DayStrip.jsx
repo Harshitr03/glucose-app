@@ -1,14 +1,19 @@
 import { SLOTS, rangeStatus } from '../constants';
 import RangeFlag from './RangeFlag';
 
-export default function DayStrip({ readings, selectedSlot, onPick }) {
+export default function DayStrip({ readings, selectedSlot, flashSlot, onPick }) {
   const bySlot = Object.fromEntries(readings.map((reading) => [reading.slot, reading]));
 
   return (
     <div className="day-strip">
       {SLOTS.map((slot) => {
         const reading = bySlot[slot.key];
-        const classes = ['slot-tile', reading ? '' : 'is-empty', selectedSlot === slot.key ? 'is-selected' : '']
+        const classes = [
+          'slot-tile',
+          reading ? '' : 'is-empty',
+          selectedSlot === slot.key ? 'is-selected' : '',
+          flashSlot === slot.key ? 'is-flash' : '',
+        ]
           .filter(Boolean)
           .join(' ');
         return (

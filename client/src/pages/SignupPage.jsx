@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import FormError from '../components/FormError';
 import BrandMark from '../components/BrandMark';
+import PasswordField from '../components/PasswordField';
 import useDocumentTitle from '../useDocumentTitle';
 
 export default function SignupPage() {
@@ -54,11 +55,7 @@ export default function SignupPage() {
             Email
             <input type="email" value={form.email} onChange={update('email')} autoComplete="email" />
           </label>
-          <label>
-            Password
-            <input type="password" value={form.password} onChange={update('password')} autoComplete="new-password" />
-            <span className="hint">At least 8 characters</span>
-          </label>
+          <PasswordField value={form.password} onChange={update('password')} autoComplete="new-password" hint="At least 8 characters" />
           <FormError error={error} />
           <button type="submit" disabled={submitting}>
             {submitting ? 'Creating account…' : 'Create account'}

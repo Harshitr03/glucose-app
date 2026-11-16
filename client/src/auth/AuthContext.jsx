@@ -6,6 +6,18 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(() => Boolean(tokenStore.get()));
+  const [notice, setNotice] = useState('');
+
+  useEffect(() => {
+    function handleExpired() {
+      setUser((current) => {
+        if (current) setNotice('Your session has expired. Please log in again.');
+        return null;
+      });
+    }
+    window.addEventListener('sweety:session-expired', handleExpired);
+    return () => window.removeEventListener('sweety:session-expired', handleExpired);
+  }, []);
 
   useEffect(() => {
     if (!tokenStore.get()) return;
@@ -17,6 +29,7 @@ export function AuthProvider({ children }) {
 
   const startSession = useCallback(({ token, user: nextUser }) => {
     tokenStore.set(token);
+    setNotice('');
     setUser(nextUser);
     return nextUser;
   }, []);
@@ -33,10 +46,14 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     tokenStore.clear();
+    setNotice('');
     setUser(null);
   }, []);
 
-  const value = useMemo(() => ({ user, loading, login, register, logout }), [user, loading, login, register, logout]);
+  const value = useMemo(
+    () => ({ user, loading, notice, login, register, logout }),
+    [user, loading, notice, login, register, logout],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1382,3 +1382,186 @@ button.calendar-day.is-selected:hover:not(:disabled) {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Toasts and confirm dialog */
+
+.toast-region {
+  position: fixed;
+  z-index: 50;
+  left: 1rem;
+  right: 1rem;
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 32rem;
+  width: 100%;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 10px 30px rgb(23 35 28 / 25%);
+  animation: toast-in 180ms ease-out;
+}
+
+.toast span {
+  flex: 1;
+}
+
+.toast-action,
+.toast-close {
+  min-height: 2.5rem;
+  border: none;
+  background: none;
+  color: #fff;
+  padding: 0 0.75rem;
+}
+
+.toast-action {
+  color: #9fe0bd;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+button.toast-action:hover:not(:disabled),
+button.toast-close:hover:not(:disabled) {
+  background: rgb(255 255 255 / 12%);
+  border: none;
+}
+
+.toast-close {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+@keyframes toast-in {
+  from {
+    transform: translateY(0.5rem);
+    opacity: 0;
+  }
+}
+
+.confirm-dialog {
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 1.4rem;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--ink);
+  box-shadow: 0 20px 50px rgb(23 35 28 / 25%);
+}
+
+.confirm-dialog::backdrop {
+  background: rgb(23 35 28 / 40%);
+}
+
+.confirm-dialog p {
+  margin: 0.5rem 0 1.25rem;
+  color: var(--muted);
+}
+
+.confirm-dialog h2 + .form-actions {
+  margin-top: 1.25rem;
+}
+
+.value-hint {
+  font-size: 0.9rem;
+}
+
+.value-hint .flag {
+  margin-left: 0;
+}
+
+.value-hint-ok {
+  color: var(--ok);
+  font-weight: 500;
+}
+
+.slot-tile.is-flash {
+  animation: tile-flash 1.4s ease-out;
+}
+
+@keyframes tile-flash {
+  0%,
+  35% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--slot) 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.welcome {
+  background: var(--sage);
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--line));
+}
+
+.welcome p {
+  max-width: 62ch;
+}
+
+.people small.patient-activity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1rem;
+  margin-top: 0.2rem;
+}
+
+.activity-alert {
+  color: var(--high);
+  font-weight: 700;
+}
+
+.notice {
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--high) 10%, white);
+  color: var(--high);
+  font-weight: 500;
+}
+
+.nav-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  margin-left: 0.4rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.password-row {
+  position: relative;
+}
+
+.password-row input {
+  padding-right: 4.5rem;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.3rem;
+  transform: translateY(-50%);
+  min-height: 2.25rem;
+  padding: 0 0.7rem;
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+button.password-toggle:hover:not(:disabled) {
+  background: var(--sage);
+  border: none;
+}

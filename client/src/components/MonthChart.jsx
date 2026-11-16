@@ -50,7 +50,7 @@ function ChartTooltip({ active, payload, label }) {
 
 export default function MonthChart({ readings, to }) {
   const rows = toChartRows(readings, to);
-  if (rows.length === 0) return <p className="empty">No readings this month yet, so there is nothing to chart.</p>;
+  if (rows.length === 0) return <p className="empty">No readings in this period yet, so there is nothing to chart.</p>;
   const highest = Math.max(...readings.map((reading) => reading.value));
   const yMax = Math.max(250, Math.ceil((highest + 20) / 50) * 50);
   const yTicks = [TARGET_RANGE.low, TARGET_RANGE.high];

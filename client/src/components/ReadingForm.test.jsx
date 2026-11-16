@@ -142,6 +142,18 @@ describe('ReadingForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(message);
   });
 
+  test.each([
+    ['185', 'High: above 180 mg/dl'],
+    ['65', 'Low: below 70 mg/dl'],
+    ['120', 'In range (70–180)'],
+  ])('shows a live hint while typing %s', async (value, hint) => {
+    const { user, valueInput } = renderForm();
+
+    await user.type(valueInput, value);
+
+    expect(screen.getByText(hint)).toBeInTheDocument();
+  });
+
   test('starts from the preset slot when one is picked from the Today strip', () => {
     renderForm({ preset: { date: todayIso(), slot: 'after_dinner' } });
     expect(screen.getByLabelText('After dinner')).toBeChecked();

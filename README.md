@@ -10,6 +10,19 @@ A web app where a diabetes patient records up to 4 blood glucose readings a day 
 - **Readings:** add, edit and delete readings with a date, time slot (Morning (fasting), After breakfast, After lunch, After dinner) and a value in mg/dl. Every validation rule from the brief is enforced on both the server and the client, with the brief's exact error messages.
 - **Reports:** daily, month-to-date and previous-month reports showing highest, lowest, average (to 1 decimal) and number of readings, plus how many fell in the 70–180 mg/dl range. The daily report lists each reading with its slot. Periods with no readings show an empty state.
 - **Logbook:** readings grouped by date, one row per day and one column per slot, browsed month by month in oldest-first or newest-first order.
+- **Quick logging:**
+  - The form picks the next empty slot for the time of day.
+  - A High, Low or In range hint appears while you type.
+  - Saving shows a confirmation and highlights the slot on the Today strip.
+  - Deleting a reading or note can be undone.
+- **Other touches:**
+  - A badge on "My doctors" when an invitation is waiting.
+  - A clear message when a session expires.
+  - The report date and logbook month stay in the URL.
+  - The chart can show this month, 7 days or 30 days.
+  - A show/hide password toggle.
+  - A welcome message for new patients.
+  - Doctors see each patient's last reading and 30-day in-range percentage.
 - **Bonus: pagination** on `GET /api/readings?page=1&limit=20`.
 - **Bonus: chart** of the month's readings with one line per slot (Recharts).
 - **Bonus: Docker** setup for PostgreSQL in `docker-compose.yml`.
@@ -135,7 +148,7 @@ Open http://localhost:5173 and log in with a demo account, or sign up.
 npm --prefix server test
 ```
 
-The 64 tests cover:
+The 65 tests cover:
 - sign up and login
 - every reading validation rule
 - the daily limits
@@ -153,7 +166,7 @@ The 64 tests cover:
 npm --prefix client test
 ```
 
-The 16 tests cover the reading form:
+The 27 tests cover the reading form and the slot suggestion:
 - each validation message
 - that nothing is saved while the form is invalid
 - saving values as numbers
@@ -161,6 +174,9 @@ The 16 tests cover the reading form:
 - server errors appearing under the right field
 - the preset slot from the Today strip
 - edit mode with save, cancel and delete
+- the live High/Low hint
+- choosing a date in the calendar, with future days blocked
+- which slot is suggested at different times of day
 
 ## API
 

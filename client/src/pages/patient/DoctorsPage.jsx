@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../api';
 import FormError from '../../components/FormError';
+import { useFeedback } from '../../feedback/FeedbackContext';
 import useDocumentTitle from '../../useDocumentTitle';
 
 export default function DoctorsPage() {
   useDocumentTitle('My doctors');
+  const { confirm, showToast } = useFeedback();
   const [doctors, setDoctors] = useState(null);
   const [error, setError] = useState(null);
 
@@ -14,20 +16,34 @@ export default function DoctorsPage() {
 
   useEffect(load, [load]);
 
-  async function run(action) {
+  async function run(action, doneMessage) {
     setError(null);
     try {
       await action();
+      showToast(doneMessage);
       load();
+      window.dispatchEvent(new Event('sweety:invites-changed'));
     } catch (err) {
       setError(err);
     }
   }
 
-  const accept = (doctor) => run(() => api(`/doctor/accept?id=${doctor.id}`, { method: 'POST' }));
-  const remove = (doctor, question) => {
-    if (window.confirm(question)) run(() => api(`/doctor?id=${doctor.id}`, { method: 'DELETE' }));
-  };
+  const accept = (doctor) =>
+    run(() => api(`/doctor/accept?id=${doctor.id}`, { method: 'POST' }), `${doctor.name} can now see your reports.`);
+
+  async function decline(doctor) {
+    await run(() => api(`/doctor?id=${doctor.id}`, { method: 'DELETE' }), `Declined ${doctor.name}'s invitation.`);
+  }
+
+  async function stopSharing(doctor) {
+    const ok = await confirm({
+      title: `Stop sharing with ${doctor.name}?`,
+      body: 'They will no longer see your readings or reports. They would need to invite you again.',
+      confirmLabel: 'Stop sharing',
+      danger: true,
+    });
+    if (ok) await run(() => api(`/doctor?id=${doctor.id}`, { method: 'DELETE' }), `Stopped sharing with ${doctor.name}.`);
+  }
 
   const pending = (doctors ?? []).filter((doctor) => doctor.status === 'pending');
   const accepted = (doctors ?? []).filter((doctor) => doctor.status === 'accepted');
@@ -56,7 +72,7 @@ export default function DoctorsPage() {
                   <button type="button" className="small" onClick={() => accept(doctor)}>
                     Accept
                   </button>
-                  <button type="button" className="secondary small" onClick={() => remove(doctor, `Decline ${doctor.name}'s invitation?`)}>
+                  <button type="button" className="secondary small" onClick={() => decline(doctor)}>
                     Decline
                   </button>
                 </div>
@@ -80,7 +96,7 @@ export default function DoctorsPage() {
                   <span className="person-name">{doctor.name}</span>
                   <small>{doctor.email}</small>
                 </div>
-                <button type="button" className="danger small" onClick={() => remove(doctor, `Stop sharing with ${doctor.name}?`)}>
+                <button type="button" className="danger small" onClick={() => stopSharing(doctor)}>
                   Stop sharing
                 </button>
               </li>

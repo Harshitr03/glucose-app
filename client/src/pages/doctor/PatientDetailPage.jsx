@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../../api';
 import { monthRange, todayIso } from '../../constants';
 import ReportSection from '../../components/ReportSection';
@@ -13,7 +13,21 @@ import useDocumentTitle from '../../useDocumentTitle';
 export default function PatientDetailPage() {
   const { id } = useParams();
   const [patient, setPatient] = useState(null);
-  const [month, setMonth] = useState(todayIso().slice(0, 7));
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentMonth = todayIso().slice(0, 7);
+  const monthParam = searchParams.get('month');
+  const month = monthParam && /^\d{4}-\d{2}$/.test(monthParam) && monthParam <= currentMonth ? monthParam : currentMonth;
+
+  function setMonth(nextMonth) {
+    setSearchParams(
+      (params) => {
+        if (nextMonth === currentMonth) params.delete('month');
+        else params.set('month', nextMonth);
+        return params;
+      },
+      { replace: true },
+    );
+  }
   const [order, setOrder] = useState('oldest');
   const [monthReadings, setMonthReadings] = useState(null);
   const [error, setError] = useState(null);

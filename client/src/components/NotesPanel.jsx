@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useState } from 'react';
 import { api } from '../api';
 import { formatTimestamp } from '../constants';
 import FormError from './FormError';
+import { useFeedback } from '../feedback/FeedbackContext';
 
 function NoteEditor({ initial = '', submitLabel, onSave, onCancel }) {
   const id = useId();
@@ -57,6 +58,7 @@ function noteDate(note) {
 }
 
 export default function NotesPanel({ patientId }) {
+  const { showToast } = useFeedback();
   const [notes, setNotes] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState(null);
@@ -78,11 +80,21 @@ export default function NotesPanel({ patientId }) {
     load();
   }
 
-  async function deleteNote(id) {
-    if (!window.confirm('Delete this note? The patient will no longer see it.')) return;
+  async function restoreNote(body) {
     try {
-      await api(`/note?id=${id}`, { method: 'DELETE' });
+      await api('/notes', { method: 'POST', body: { patientId, body } });
+      showToast('Note restored.');
       load();
+    } catch (err) {
+      showToast(err.message);
+    }
+  }
+
+  async function deleteNote(note) {
+    try {
+      await api(`/note?id=${note.id}`, { method: 'DELETE' });
+      load();
+      showToast('Note deleted.', { label: 'Undo', onClick: () => restoreNote(note.body) });
     } catch (err) {
       setError(err);
     }
@@ -117,7 +129,7 @@ export default function NotesPanel({ patientId }) {
                       <button type="button" className="secondary small" onClick={() => setEditingId(note.id)}>
                         Edit
                       </button>
-                      <button type="button" className="danger small" onClick={() => deleteNote(note.id)}>
+                      <button type="button" className="danger small" onClick={() => deleteNote(note)}>
                         Delete
                       </button>
                     </div>

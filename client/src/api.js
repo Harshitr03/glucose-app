@@ -26,6 +26,11 @@ export async function api(path, { method = 'GET', body } = {}) {
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
+  if (res.status === 401 && token && path !== '/auth/login') {
+    tokenStore.clear();
+    window.dispatchEvent(new Event('sweety:session-expired'));
+  }
+
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

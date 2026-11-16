@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { SLOTS, todayIso } from '../constants';
+import { SLOTS, TARGET_RANGE, rangeStatus, todayIso } from '../constants';
 import FormError from './FormError';
 import DateField from './DateField';
 import SlotMarker from './SlotMarker';
@@ -22,6 +22,17 @@ function initialForm(reading, preset) {
 
 const FIELDS = ['date', 'slot', 'value'];
 
+const HINTS = {
+  low: { className: 'flag flag-low', text: `Low: below ${TARGET_RANGE.low} mg/dl` },
+  high: { className: 'flag flag-high', text: `High: above ${TARGET_RANGE.high} mg/dl` },
+  'in-range': { className: 'value-hint-ok', text: `In range (${TARGET_RANGE.low}–${TARGET_RANGE.high})` },
+};
+
+function valueHint(value) {
+  if (validateReading({ date: todayIso(), value })) return null;
+  return HINTS[rangeStatus(Number(value))];
+}
+
 export default function ReadingForm({ reading, preset, onSave, onCancel, onDelete, autoFocus = false }) {
   const id = useId();
   const [form, setForm] = useState(() => initialForm(reading, preset));
@@ -34,6 +45,7 @@ export default function ReadingForm({ reading, preset, onSave, onCancel, onDelet
   const errorProps = (field) =>
     fieldError(field) ? { 'aria-invalid': 'true', 'aria-describedby': `${id}-${field}-error` } : {};
   const generalError = error && !FIELDS.includes(error.field) ? error : null;
+  const hint = valueHint(form.value);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -99,7 +111,12 @@ export default function ReadingForm({ reading, preset, onSave, onCancel, onDelet
           autoFocus={autoFocus}
           {...errorProps('value')}
         />
-        {renderFieldError('value')}
+        {renderFieldError('value') ??
+          (hint && (
+            <p className="value-hint">
+              <span className={hint.className}>{hint.text}</span>
+            </p>
+          ))}
       </div>
       <button type="submit" disabled={saving}>
         {isEdit ? 'Save changes' : 'Add reading'}

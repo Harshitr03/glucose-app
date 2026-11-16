@@ -2,11 +2,36 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import FormError from '../../components/FormError';
+import { useFeedback } from '../../feedback/FeedbackContext';
+import { formatDate, todayIso } from '../../constants';
 import useDocumentTitle from '../../useDocumentTitle';
+
+function daysAgo(iso) {
+  const diff = Math.round((new Date(`${todayIso()}T00:00:00Z`) - new Date(`${iso}T00:00:00Z`)) / 86_400_000);
+  if (diff === 0) return 'today';
+  if (diff === 1) return 'yesterday';
+  return `${diff} days ago (${formatDate(iso)})`;
+}
+
+function PatientActivity({ patient }) {
+  if (!patient.lastReadingDate) return <small>No readings yet</small>;
+  const percent = patient.recentCount ? Math.round((patient.recentInRange / patient.recentCount) * 100) : null;
+  return (
+    <small className="patient-activity">
+      <span>Last reading {daysAgo(patient.lastReadingDate)}</span>
+      {percent !== null && (
+        <span className={percent < 50 ? 'activity-alert' : undefined}>
+          {percent}% in range over 30 days ({patient.recentCount} readings)
+        </span>
+      )}
+    </small>
+  );
+}
 
 export default function PatientsPage() {
   useDocumentTitle('Patients');
   const navigate = useNavigate();
+  const { confirm, showToast } = useFeedback();
   const [patients, setPatients] = useState(null);
   const [email, setEmail] = useState('');
   const [inviteError, setInviteError] = useState(null);
@@ -34,9 +59,17 @@ export default function PatientsPage() {
   }
 
   async function remove(patient) {
-    if (!window.confirm(`Remove ${patient.name} from your patients?`)) return;
+    const pending = patient.status === 'pending';
+    const ok = await confirm({
+      title: pending ? `Cancel the invitation to ${patient.name}?` : `Remove ${patient.name}?`,
+      body: pending ? undefined : 'You will no longer see their readings or reports. Your notes stay visible to them.',
+      confirmLabel: pending ? 'Cancel invitation' : 'Remove patient',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await api(`/patient?id=${patient.id}`, { method: 'DELETE' });
+      showToast(pending ? `Cancelled the invitation to ${patient.name}.` : `Removed ${patient.name}.`);
       load();
     } catch (err) {
       setError(err);
@@ -87,7 +120,11 @@ export default function PatientsPage() {
                     <span className="person-name">{patient.name}</span>
                   )}
                   <small>{patient.email}</small>
-                  {patient.status === 'pending' && <small className="status-pending">Waiting for them to accept</small>}
+                  {patient.status === 'pending' ? (
+                    <small className="status-pending">Waiting for them to accept</small>
+                  ) : (
+                    <PatientActivity patient={patient} />
+                  )}
                 </div>
                 <div className="row-actions">
                   {patient.status === 'accepted' && (
