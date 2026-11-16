@@ -7,8 +7,10 @@ import Logbook from '../../components/Logbook';
 import MonthNav from '../../components/MonthNav';
 import OrderToggle from '../../components/OrderToggle';
 import FormError from '../../components/FormError';
+import useDocumentTitle from '../../useDocumentTitle';
 
 export default function ReadingsPage() {
+  useDocumentTitle('Readings');
   const today = todayIso();
   const [todayReadings, setTodayReadings] = useState([]);
   const [month, setMonth] = useState(today.slice(0, 7));
@@ -109,7 +111,7 @@ export default function ReadingsPage() {
       <section className="section" aria-labelledby="logbook-heading">
         <div className="section-header">
           <h2 id="logbook-heading">Logbook</h2>
-          <div className="row-actions">
+          <div className="logbook-controls">
             <OrderToggle order={order} onChange={setOrder} />
             <MonthNav month={month} onChange={setMonth} />
           </div>

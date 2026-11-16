@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import FormError from '../components/FormError';
 import BrandMark from '../components/BrandMark';
+import useDocumentTitle from '../useDocumentTitle';
 
 export default function SignupPage() {
+  useDocumentTitle('Create account');
   const { register } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'patient' });
   const [error, setError] = useState(null);

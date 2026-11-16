@@ -8,6 +8,7 @@ import MonthNav from '../../components/MonthNav';
 import OrderToggle from '../../components/OrderToggle';
 import NotesPanel from '../../components/NotesPanel';
 import FormError from '../../components/FormError';
+import useDocumentTitle from '../../useDocumentTitle';
 
 export default function PatientDetailPage() {
   const { id } = useParams();
@@ -16,6 +17,7 @@ export default function PatientDetailPage() {
   const [order, setOrder] = useState('oldest');
   const [monthReadings, setMonthReadings] = useState(null);
   const [error, setError] = useState(null);
+  useDocumentTitle(patient?.name ?? 'Patient');
 
   useEffect(() => {
     api('/patients')
@@ -39,7 +41,7 @@ export default function PatientDetailPage() {
     return (
       <>
         <FormError error={error} />
-        <Link to="/patients" className="back-link">Back to patients</Link>
+        <Link to="/patients" className="back-link">‹ All patients</Link>
       </>
     );
   }
@@ -49,7 +51,7 @@ export default function PatientDetailPage() {
     <>
       <header className="page-header">
         <div>
-          <Link to="/patients" className="back-link">Back to patients</Link>
+          <Link to="/patients" className="back-link">‹ All patients</Link>
           <h1>{patient.name}</h1>
           <p className="subtle">{patient.email}</p>
         </div>
@@ -57,18 +59,18 @@ export default function PatientDetailPage() {
 
       <ReportSection reportsPath={`/patient/reports?id=${id}&`} readingsPath={`/patient/readings?id=${id}&`} />
 
-      <NotesPanel patientId={patient.id} />
-
       <section className="section" aria-labelledby="logbook-heading">
         <div className="section-header">
           <h2 id="logbook-heading">Logbook</h2>
-          <div className="row-actions">
+          <div className="logbook-controls">
             <OrderToggle order={order} onChange={setOrder} />
             <MonthNav month={month} onChange={setMonth} />
           </div>
         </div>
         <Logbook readings={monthReadings} order={order} emptyText="No readings this month." />
       </section>
+
+      <NotesPanel patientId={patient.id} />
     </>
   );
 }

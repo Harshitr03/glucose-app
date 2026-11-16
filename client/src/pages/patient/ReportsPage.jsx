@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
 import ReportSection from '../../components/ReportSection';
-import { formatDate } from '../../constants';
+import { formatTimestamp } from '../../constants';
+import useDocumentTitle from '../../useDocumentTitle';
 
 export default function ReportsPage() {
+  useDocumentTitle('Reports');
   const [notes, setNotes] = useState(null);
 
   useEffect(() => {
@@ -18,16 +20,20 @@ export default function ReportsPage() {
       <ReportSection reportsPath="/reports?" readingsPath="/readings?" />
       <section className="panel" aria-labelledby="notes-heading">
         <h2 id="notes-heading">Notes from your doctors</h2>
-        {notes === null ? null : notes.length === 0 ? (
+        {notes === null ? (
+          <p className="loading">Loading notes…</p>
+        ) : notes.length === 0 ? (
           <p className="empty">No notes yet. When a doctor writes a note for you, it appears here.</p>
         ) : (
           <ul className="notes">
             {notes.map((note) => (
-              <li key={note.id}>
+              <li key={note.id} className="note">
                 <p>{note.body}</p>
-                <small>
-                  {note.doctorName}, {formatDate(note.updatedAt.slice(0, 10))}
-                </small>
+                <div className="note-footer">
+                  <small>
+                    {note.doctorName}, {formatTimestamp(note.updatedAt)}
+                  </small>
+                </div>
               </li>
             ))}
           </ul>

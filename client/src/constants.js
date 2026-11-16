@@ -1,8 +1,8 @@
 export const SLOTS = [
-  { key: 'morning_fasting', label: 'Morning (fasting)', short: 'Morning', color: '#E0893A' },
-  { key: 'after_breakfast', label: 'After breakfast', short: 'Breakfast', color: '#C9A227' },
-  { key: 'after_lunch', label: 'After lunch', short: 'Lunch', color: '#2F9C88' },
-  { key: 'after_dinner', label: 'After dinner', short: 'Dinner', color: '#4B4FA8' },
+  { key: 'morning_fasting', label: 'Morning (fasting)', short: 'Morning', color: '#E0893A', line: '#C46F1E', shape: 'circle' },
+  { key: 'after_breakfast', label: 'After breakfast', short: 'Breakfast', color: '#C9A227', line: '#A88512', shape: 'square' },
+  { key: 'after_lunch', label: 'After lunch', short: 'Lunch', color: '#2F9C88', line: '#2F9C88', shape: 'triangle' },
+  { key: 'after_dinner', label: 'After dinner', short: 'Dinner', color: '#4B4FA8', line: '#4B4FA8', shape: 'diamond' },
 ];
 
 export const TARGET_RANGE = { low: 70, high: 180 };
@@ -29,6 +29,10 @@ function parseIso(iso) {
 
 export function formatDate(iso) {
   return parseIso(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+export function formatTimestamp(timestamp) {
+  return new Date(timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 export function formatDayMonth(iso) {

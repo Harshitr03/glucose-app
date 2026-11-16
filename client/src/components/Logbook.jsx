@@ -12,12 +12,19 @@ function groupByDate(readings, order) {
   return dates.map((date) => ({ date, slots: byDate.get(date) }));
 }
 
-function ValueCell({ reading, slot, onSelect }) {
-  if (!reading) return <span className="no-value" aria-label="No reading">–</span>;
+function Value({ reading, slot, onSelect }) {
+  if (!reading) {
+    return (
+      <span className="no-value" aria-label="No reading">
+        –
+      </span>
+    );
+  }
+  const status = rangeStatus(reading.value);
   const content = (
     <>
-      {reading.value}
-      <RangeFlag status={rangeStatus(reading.value)} />
+      <span className={status === 'in-range' ? undefined : `value-${status}`}>{reading.value}</span>
+      <RangeFlag status={status} />
     </>
   );
   if (!onSelect) return content;
@@ -33,40 +40,68 @@ function ValueCell({ reading, slot, onSelect }) {
   );
 }
 
+function dayLabel(date, today) {
+  return date === today ? 'Today' : formatWeekday(date);
+}
+
 export default function Logbook({ readings, order = 'oldest', onSelect, emptyText }) {
-  if (readings === null) return null;
+  if (readings === null) return <p className="loading">Loading readings…</p>;
   if (readings.length === 0) return <p className="empty">{emptyText}</p>;
   const today = todayIso();
+  const days = groupByDate(readings, order);
 
   return (
-    <div className="logbook-wrap">
-      <table className="logbook">
-        <thead>
-          <tr>
-            <th scope="col">Date</th>
-            {SLOTS.map((slot) => (
-              <th key={slot.key} scope="col" className="slot-col" style={{ '--slot': slot.color }}>
-                {slot.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {groupByDate(readings, order).map(({ date, slots }) => (
-            <tr key={date} className={date === today ? 'is-today' : undefined}>
-              <th scope="row" className="date-cell">
-                {formatDayMonth(date)}
-                <span>{date === today ? 'Today' : formatWeekday(date)}</span>
-              </th>
+    <>
+      <ul className="day-cards">
+        {days.map(({ date, slots }) => (
+          <li key={date} className={`day-card${date === today ? ' is-today' : ''}`}>
+            <h3>
+              {formatDayMonth(date)}
+              <span>{dayLabel(date, today)}</span>
+            </h3>
+            <dl className="day-card-slots">
               {SLOTS.map((slot) => (
-                <td key={slot.key} className="value-cell" style={{ '--slot': slot.color }}>
-                  <ValueCell reading={slots[slot.key]} slot={slot} onSelect={onSelect} />
-                </td>
+                <div key={slot.key} style={{ '--slot': slot.color }}>
+                  <dt>{slot.short}</dt>
+                  <dd>
+                    <Value reading={slots[slot.key]} slot={slot} onSelect={onSelect} />
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </li>
+        ))}
+      </ul>
+
+      <div className="logbook-wrap">
+        <table className="logbook">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              {SLOTS.map((slot) => (
+                <th key={slot.key} scope="col" className="slot-col" style={{ '--slot': slot.color }}>
+                  {slot.label}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {days.map(({ date, slots }) => (
+              <tr key={date} className={date === today ? 'is-today' : undefined}>
+                <th scope="row" className="date-cell">
+                  {formatDayMonth(date)}
+                  <span>{dayLabel(date, today)}</span>
+                </th>
+                {SLOTS.map((slot) => (
+                  <td key={slot.key} className="value-cell" style={{ '--slot': slot.color }}>
+                    <Value reading={slots[slot.key]} slot={slot} onSelect={onSelect} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

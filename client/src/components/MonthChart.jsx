@@ -1,5 +1,13 @@
 import { CartesianGrid, Line, LineChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { SLOTS, TARGET_RANGE, formatDayMonth } from '../constants';
+import SlotMarker, { markerPath } from './SlotMarker';
+
+function markerDot(slot, size) {
+  return function Dot({ cx, cy, index }) {
+    if (cx == null || cy == null) return null;
+    return <path key={index} d={markerPath(slot.shape, cx, cy, size)} fill={slot.line} stroke="#fff" strokeWidth={1} />;
+  };
+}
 
 function eachDate(from, to) {
   const dates = [];
@@ -30,7 +38,7 @@ function ChartTooltip({ active, payload, label }) {
       <strong>{formatDayMonth(label)}</strong>
       <ul>
         {payload.map((entry) => (
-          <li key={entry.dataKey} style={{ '--slot': entry.color }}>
+          <li key={entry.dataKey}>
             <span>{entry.name}</span>
             <strong>{entry.value}</strong>
           </li>
@@ -45,7 +53,7 @@ export default function MonthChart({ readings, to }) {
   if (rows.length === 0) return <p className="empty">No readings this month yet, so there is nothing to chart.</p>;
   const highest = Math.max(...readings.map((reading) => reading.value));
   const yMax = Math.max(250, Math.ceil((highest + 20) / 50) * 50);
-  const yTicks = [40, TARGET_RANGE.low, TARGET_RANGE.high];
+  const yTicks = [TARGET_RANGE.low, TARGET_RANGE.high];
   for (let tick = 250; tick <= yMax; tick += 50) yTicks.push(tick);
 
   return (
@@ -77,11 +85,11 @@ export default function MonthChart({ readings, to }) {
               type="linear"
               dataKey={slot.key}
               name={slot.label}
-              stroke={slot.color}
+              stroke={slot.line}
               strokeWidth={2.5}
               connectNulls
-              dot={{ r: 3.5, strokeWidth: 0, fill: slot.color }}
-              activeDot={{ r: 5 }}
+              dot={markerDot(slot, 9)}
+              activeDot={markerDot(slot, 13)}
               isAnimationActive={false}
             />
           ))}
@@ -89,11 +97,15 @@ export default function MonthChart({ readings, to }) {
       </ResponsiveContainer>
       <div className="chart-legend">
         {SLOTS.map((slot) => (
-          <span key={slot.key} style={{ '--slot': slot.color }}>
+          <span key={slot.key}>
+            <SlotMarker shape={slot.shape} color={slot.line} />
             {slot.label}
           </span>
         ))}
-        <span className="chart-legend-band">Target range {TARGET_RANGE.low}–{TARGET_RANGE.high} mg/dl</span>
+        <span>
+          <i className="band-key" aria-hidden="true" />
+          Target range {TARGET_RANGE.low}–{TARGET_RANGE.high} mg/dl
+        </span>
       </div>
     </div>
   );

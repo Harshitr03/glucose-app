@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import FormError from '../components/FormError';
 import BrandMark from '../components/BrandMark';
+import useDocumentTitle from '../useDocumentTitle';
 
 export default function LoginPage() {
+  useDocumentTitle('Log in');
   const { login } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState(null);

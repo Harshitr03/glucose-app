@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import FormError from '../../components/FormError';
+import useDocumentTitle from '../../useDocumentTitle';
 
 export default function PatientsPage() {
+  useDocumentTitle('Patients');
+  const navigate = useNavigate();
   const [patients, setPatients] = useState(null);
   const [email, setEmail] = useState('');
   const [inviteError, setInviteError] = useState(null);
@@ -67,7 +70,9 @@ export default function PatientsPage() {
       <section className="panel" aria-labelledby="patients-heading">
         <h2 id="patients-heading">Your patients</h2>
         <FormError error={error} />
-        {patients === null ? null : patients.length === 0 ? (
+        {patients === null ? (
+          <p className="loading">Loading patients…</p>
+        ) : patients.length === 0 ? (
           <p className="empty">No patients yet. Invite one with their email address.</p>
         ) : (
           <ul className="people">
@@ -86,9 +91,11 @@ export default function PatientsPage() {
                 </div>
                 <div className="row-actions">
                   {patient.status === 'accepted' && (
-                    <Link to={`/patients/${patient.id}`}>View reports</Link>
+                    <button type="button" className="secondary small" onClick={() => navigate(`/patients/${patient.id}`)}>
+                      View reports
+                    </button>
                   )}
-                  <button type="button" className="link-button danger" onClick={() => remove(patient)}>
+                  <button type="button" className="danger small" onClick={() => remove(patient)}>
                     {patient.status === 'pending' ? 'Cancel invitation' : 'Remove'}
                   </button>
                 </div>

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../api';
 import FormError from '../../components/FormError';
+import useDocumentTitle from '../../useDocumentTitle';
 
 export default function DoctorsPage() {
+  useDocumentTitle('My doctors');
   const [doctors, setDoctors] = useState(null);
   const [error, setError] = useState(null);
 
@@ -51,10 +53,10 @@ export default function DoctorsPage() {
                   <small>{doctor.email}</small>
                 </div>
                 <div className="row-actions">
-                  <button type="button" onClick={() => accept(doctor)}>
+                  <button type="button" className="small" onClick={() => accept(doctor)}>
                     Accept
                   </button>
-                  <button type="button" className="secondary" onClick={() => remove(doctor, `Decline ${doctor.name}'s invitation?`)}>
+                  <button type="button" className="secondary small" onClick={() => remove(doctor, `Decline ${doctor.name}'s invitation?`)}>
                     Decline
                   </button>
                 </div>
@@ -66,7 +68,9 @@ export default function DoctorsPage() {
 
       <section className="panel" aria-labelledby="doctors-heading">
         <h2 id="doctors-heading">Sharing with</h2>
-        {doctors === null ? null : accepted.length === 0 ? (
+        {doctors === null ? (
+          <p className="loading">Loading doctors…</p>
+        ) : accepted.length === 0 ? (
           <p className="empty">You are not sharing with any doctor yet. When a doctor invites you, the invitation appears on this page.</p>
         ) : (
           <ul className="people">
@@ -76,7 +80,7 @@ export default function DoctorsPage() {
                   <span className="person-name">{doctor.name}</span>
                   <small>{doctor.email}</small>
                 </div>
-                <button type="button" className="link-button danger" onClick={() => remove(doctor, `Stop sharing with ${doctor.name}?`)}>
+                <button type="button" className="danger small" onClick={() => remove(doctor, `Stop sharing with ${doctor.name}?`)}>
                   Stop sharing
                 </button>
               </li>

@@ -1,37 +1,59 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { api } from '../api';
-import { formatDate } from '../constants';
+import { formatTimestamp } from '../constants';
 import FormError from './FormError';
 
 function NoteEditor({ initial = '', submitLabel, onSave, onCancel }) {
+  const id = useId();
   const [text, setText] = useState(initial);
   const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError(null);
+    setSaving(true);
     try {
       await onSave(text);
       setText('');
     } catch (err) {
       setError(err);
+    } finally {
+      setSaving(false);
     }
   }
 
   return (
     <form className="note-editor" onSubmit={handleSubmit} noValidate>
-      <textarea rows={3} value={text} placeholder="Write advice or observations for the patient" onChange={(event) => setText(event.target.value)} aria-label="Note" />
+      <label htmlFor={id} className="visually-hidden">
+        Note
+      </label>
+      <textarea
+        id={id}
+        rows={3}
+        value={text}
+        placeholder="Write advice or observations for the patient"
+        onChange={(event) => setText(event.target.value)}
+        aria-invalid={error ? 'true' : undefined}
+      />
+      <FormError error={error} />
       <div className="form-actions">
-        <button type="submit">{submitLabel}</button>
+        <button type="submit" className={onCancel ? 'small' : undefined} disabled={saving}>
+          {submitLabel}
+        </button>
         {onCancel && (
-          <button type="button" className="secondary" onClick={onCancel}>
+          <button type="button" className="secondary small" onClick={onCancel}>
             Cancel
           </button>
         )}
       </div>
-      <FormError error={error} />
     </form>
   );
+}
+
+function noteDate(note) {
+  const edited = note.updatedAt !== note.createdAt;
+  return `${edited ? 'Edited' : 'Added'} ${formatTimestamp(note.updatedAt)}`;
 }
 
 export default function NotesPanel({ patientId }) {
@@ -57,7 +79,7 @@ export default function NotesPanel({ patientId }) {
   }
 
   async function deleteNote(id) {
-    if (!window.confirm('Delete this note?')) return;
+    if (!window.confirm('Delete this note? The patient will no longer see it.')) return;
     try {
       await api(`/note?id=${id}`, { method: 'DELETE' });
       load();
@@ -67,16 +89,18 @@ export default function NotesPanel({ patientId }) {
   }
 
   return (
-    <section className="panel">
-      <h2>Your notes for this patient</h2>
+    <section className="panel" aria-labelledby="notes-heading">
+      <h2 id="notes-heading">Your notes for this patient</h2>
       <NoteEditor submitLabel="Add note" onSave={addNote} />
       <FormError error={error} />
-      {notes === null ? null : notes.length === 0 ? (
+      {notes === null ? (
+        <p className="loading">Loading notes…</p>
+      ) : notes.length === 0 ? (
         <p className="empty">No notes yet. The patient can read every note you add here.</p>
       ) : (
         <ul className="notes">
           {notes.map((note) => (
-            <li key={note.id}>
+            <li key={note.id} className="note">
               {editingId === note.id ? (
                 <NoteEditor
                   initial={note.body}
@@ -87,14 +111,16 @@ export default function NotesPanel({ patientId }) {
               ) : (
                 <>
                   <p>{note.body}</p>
-                  <small>{formatDate(note.updatedAt.slice(0, 10))}</small>
-                  <div className="row-actions">
-                    <button type="button" className="link-button" onClick={() => setEditingId(note.id)}>
-                      Edit
-                    </button>
-                    <button type="button" className="link-button danger" onClick={() => deleteNote(note.id)}>
-                      Delete
-                    </button>
+                  <div className="note-footer">
+                    <small>{noteDate(note)}</small>
+                    <div className="row-actions">
+                      <button type="button" className="secondary small" onClick={() => setEditingId(note.id)}>
+                        Edit
+                      </button>
+                      <button type="button" className="danger small" onClick={() => deleteNote(note.id)}>
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </>
               )}

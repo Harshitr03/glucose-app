@@ -1,19 +1,23 @@
+/* Mobile-first: base rules target phones; min-width queries at 640px and 960px add the wider layouts. */
+
 :root {
   --ink: #1c2230;
   --muted: #5b6475;
   --line: #e3e6ec;
+  --control: #8a93a3;
   --bg: #f4f6f9;
   --surface: #ffffff;
   --primary: #1f5fad;
   --primary-strong: #174a87;
   --danger: #b42318;
   --ok: #1e7b4f;
-  --high: #b4531a;
+  --high: #9a4310;
   --low: #b42318;
   --radius: 10px;
+  --tap: 2.75rem;
 
   font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.5;
   color: var(--ink);
   background: var(--bg);
@@ -30,7 +34,7 @@ body {
 }
 
 h1 {
-  font-size: 1.95rem;
+  font-size: 1.75rem;
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.01em;
@@ -38,7 +42,7 @@ h1 {
 }
 
 h2 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
   line-height: 1.25;
   margin: 0;
@@ -60,11 +64,11 @@ a {
 }
 
 :focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline: 3px solid var(--primary);
   outline-offset: 2px;
 }
 
-/* Forms */
+/* Form controls */
 
 label {
   display: flex;
@@ -78,41 +82,56 @@ select,
 textarea {
   font: inherit;
   color: inherit;
+  width: 100%;
+  min-height: var(--tap);
   padding: 0.6rem 0.75rem;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--control);
   border-radius: 8px;
   background: var(--surface);
-  min-height: 2.75rem;
 }
 
 input:hover,
 select:hover,
 textarea:hover {
-  border-color: #c7ccd6;
+  border-color: var(--ink);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+  outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  outline-offset: 0;
 }
 
-input[aria-invalid='true'] {
+[aria-invalid='true'] {
   border-color: var(--danger);
 }
 
 .hint {
   color: var(--muted);
   font-weight: 400;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
+
+.field-error,
+.form-error {
+  color: var(--danger);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.form-success {
+  color: var(--ok);
+  font-weight: 500;
+}
+
+/* Buttons: primary, secondary, danger, and a small size for row actions */
 
 button {
   font: inherit;
   font-weight: 700;
-  min-height: 2.75rem;
+  min-height: var(--tap);
   padding: 0.55rem 1.1rem;
   border: 1.5px solid var(--primary);
   border-radius: 8px;
@@ -127,35 +146,41 @@ button:hover:not(:disabled) {
 }
 
 button:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: default;
 }
 
 button.secondary {
   background: var(--surface);
   color: var(--primary);
-  border-color: var(--line);
+  border-color: var(--control);
 }
 
 button.secondary:hover:not(:disabled) {
   background: var(--bg);
-  border-color: #c7ccd6;
+  border-color: var(--ink);
 }
 
 button.danger {
   background: var(--surface);
   color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 35%, var(--line));
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--surface));
 }
 
 button.danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--danger) 8%, white);
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
   border-color: var(--danger);
 }
 
+button.small {
+  min-height: 2.5rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.9rem;
+}
+
 .link-button {
-  min-height: auto;
-  padding: 0.15rem 0;
+  min-height: var(--tap);
+  padding: 0 0.25rem;
   border: none;
   background: none;
   color: var(--primary);
@@ -168,24 +193,10 @@ button.danger:hover:not(:disabled) {
   text-underline-offset: 3px;
 }
 
-.link-button.danger {
-  color: var(--danger);
-}
-
-.form-error {
-  color: var(--danger);
-  font-weight: 500;
-}
-
-.form-success {
-  color: var(--ok);
-  font-weight: 500;
-}
-
 .form-actions,
 .row-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.6rem;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -193,20 +204,24 @@ button.danger:hover:not(:disabled) {
 /* App shell */
 
 .topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'brand user'
+    'nav nav';
   align-items: center;
-  gap: 2rem;
-  padding: 0 1.5rem;
-  min-height: 4rem;
+  gap: 0.25rem 1rem;
+  padding: 0.6rem 1rem 0;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
 }
 
 .brand {
+  grid-area: brand;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: -0.01em;
   color: var(--ink);
@@ -214,20 +229,22 @@ button.danger:hover:not(:disabled) {
 }
 
 .topbar nav {
+  grid-area: nav;
   display: flex;
-  gap: 1.5rem;
-  flex: 1;
-  align-self: stretch;
+  gap: 1.25rem;
+  overflow-x: auto;
 }
 
 .topbar nav a {
   display: flex;
   align-items: center;
+  min-height: var(--tap);
   color: var(--muted);
   font-weight: 500;
   text-decoration: none;
   border-bottom: 3px solid transparent;
   padding-top: 3px;
+  white-space: nowrap;
 }
 
 .topbar nav a:hover {
@@ -241,63 +258,70 @@ button.danger:hover:not(:disabled) {
 }
 
 .topbar-user {
+  grid-area: user;
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: center;
   color: var(--muted);
+}
+
+.topbar-user span {
+  display: none;
 }
 
 .page {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: 1.25rem 1rem 3rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .page-header {
   display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.page-header .subtle {
-  margin-top: 0.25rem;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.9rem;
 }
 
 .section-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 1.5rem;
+  padding: 1.1rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
 .empty,
-.subtle {
+.subtle,
+.loading {
   color: var(--muted);
 }
 
+.skeleton {
+  height: 300px;
+  border-radius: 8px;
+  background: var(--bg);
+}
+
 .back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
   font-weight: 500;
 }
 
@@ -324,10 +348,6 @@ button.danger:hover:not(:disabled) {
   gap: 1.25rem;
 }
 
-.auth-card .brand {
-  margin-bottom: 0.5rem;
-}
-
 .auth-card form {
   display: flex;
   flex-direction: column;
@@ -335,11 +355,7 @@ button.danger:hover:not(:disabled) {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 1.75rem;
-}
-
-.auth-card button[type='submit'] {
-  margin-top: 0.25rem;
+  padding: 1.25rem;
 }
 
 .auth-switch {
@@ -366,18 +382,20 @@ button.danger:hover:not(:disabled) {
   flex-direction: row;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.6rem 0.75rem;
-  border: 1.5px solid var(--line);
+  min-height: var(--tap);
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid var(--control);
   border-radius: 8px;
   cursor: pointer;
 }
 
 .role-picker label:has(input:checked) {
   border-color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 6%, white);
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
 }
 
 .role-picker input {
+  width: auto;
   min-height: auto;
   accent-color: var(--primary);
 }
@@ -386,22 +404,21 @@ button.danger:hover:not(:disabled) {
 
 .day-strip {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
 }
 
 .slot-tile {
-  --tint: color-mix(in srgb, var(--slot) 11%, white);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.25rem;
-  min-height: 8.5rem;
-  padding: 1rem 1.1rem;
-  border: 1.5px solid color-mix(in srgb, var(--slot) 28%, white);
+  min-height: 7rem;
+  padding: 0.85rem 0.9rem;
+  border: 1.5px solid color-mix(in srgb, var(--slot) 30%, white);
   border-top: 5px solid var(--slot);
   border-radius: var(--radius);
-  background: var(--tint);
+  background: color-mix(in srgb, var(--slot) 11%, white);
   color: var(--ink);
   font-weight: 400;
   text-align: left;
@@ -409,7 +426,7 @@ button.danger:hover:not(:disabled) {
 
 button.slot-tile:hover:not(:disabled) {
   background: color-mix(in srgb, var(--slot) 18%, white);
-  border-color: color-mix(in srgb, var(--slot) 45%, white);
+  border-color: color-mix(in srgb, var(--slot) 50%, white);
   border-top-color: var(--slot);
 }
 
@@ -420,7 +437,8 @@ button.slot-tile:hover:not(:disabled) {
 }
 
 .slot-tile.is-selected {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--slot) 40%, transparent);
+  outline: 3px solid color-mix(in srgb, var(--slot) 55%, transparent);
+  outline-offset: 1px;
 }
 
 .slot-tile-label {
@@ -429,17 +447,17 @@ button.slot-tile:hover:not(:disabled) {
 }
 
 .slot-tile-value {
-  font-size: 2.44rem;
+  font-size: 2rem;
   font-weight: 800;
   line-height: 1;
   margin-top: auto;
 }
 
 .slot-tile-value small {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
   color: var(--muted);
-  margin-left: 0.25rem;
+  margin-left: 0.2rem;
 }
 
 .slot-tile-add {
@@ -452,29 +470,134 @@ button.slot-tile:hover:not(:disabled) {
 
 .reading-form {
   display: grid;
-  grid-template-columns: 1fr 1.2fr 1fr auto;
   gap: 1rem;
-  align-items: end;
 }
 
-.reading-form .form-error {
-  grid-column: 1 / -1;
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .reading-form-footer {
-  grid-column: 1 / -1;
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
-/* Range flags */
+/* Date field: readable date with the native picker underneath */
+
+.date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.date-field > label {
+  font-weight: 500;
+}
+
+.date-field-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.date-display {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: var(--tap);
+  padding: 0 0.75rem;
+  border: 1.5px solid var(--control);
+  border-radius: 8px;
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.date-display svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.date-display:hover {
+  border-color: var(--ink);
+}
+
+.date-display:focus-within {
+  border-color: var(--primary);
+  outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+.date-display.is-invalid {
+  border-color: var(--danger);
+}
+
+/* The real input covers the display so a click anywhere opens the browser's calendar. */
+.date-display input {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.date-display input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap);
+  padding: 0.4rem;
+}
+
+.date-field-chips {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.chip {
+  min-height: var(--tap);
+  padding: 0.2rem 0.9rem;
+  border: 1.5px solid var(--control);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.chip:hover:not(:disabled) {
+  background: var(--bg);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.chip[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--primary) 9%, var(--surface));
+  border-color: var(--primary);
+  color: var(--primary-strong);
+}
+
+/* Range flags and tinted values */
 
 .flag {
   display: inline-block;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 700;
+  line-height: 1.3;
   padding: 0.05rem 0.4rem;
   border-radius: 4px;
   margin-left: 0.4rem;
@@ -491,102 +614,31 @@ button.slot-tile:hover:not(:disabled) {
   background: color-mix(in srgb, var(--low) 10%, white);
 }
 
-/* Logbook: one row per date, one column per slot */
+.value-high {
+  color: var(--high);
+}
+
+.value-low {
+  color: var(--low);
+}
+
+/* Logbook: day cards on phones, a date-by-slot table from 640px */
 
 .month-nav {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .month-nav strong {
+  flex: 1;
   min-width: 9.5rem;
   text-align: center;
 }
 
-.month-nav button {
-  min-width: 2.75rem;
-  padding: 0.4rem 0.6rem;
-}
-
-.logbook-wrap {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow-x: auto;
-}
-
-.logbook {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 600px;
-}
-
-.logbook th,
-.logbook td {
-  padding: 0.7rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid var(--line);
-}
-
-.logbook tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.logbook thead th {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--muted);
-  background: var(--bg);
-}
-
-.logbook thead th.slot-col {
-  color: color-mix(in srgb, var(--slot) 60%, var(--ink));
-  box-shadow: inset 0 3px 0 var(--slot);
-}
-
-.logbook .date-cell {
-  white-space: nowrap;
-  width: 9rem;
-}
-
-.logbook .date-cell span {
-  color: var(--muted);
-  margin-left: 0.4rem;
-}
-
-.logbook tr.is-today .date-cell {
-  font-weight: 700;
-}
-
-.logbook .value-cell {
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-.logbook .value-button {
-  min-height: 2.25rem;
-  padding: 0.2rem 0.5rem;
-  margin: -0.2rem -0.5rem;
-  border: 1.5px solid transparent;
-  background: none;
-  color: var(--ink);
-  font-size: inherit;
-}
-
-.logbook .value-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--slot) 10%, white);
-  border-color: color-mix(in srgb, var(--slot) 35%, white);
-}
-
-.logbook .no-value {
-  color: #b5bbc6;
-  font-weight: 400;
-}
-
 .order-toggle {
   display: inline-flex;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--control);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -598,7 +650,7 @@ button.slot-tile:hover:not(:disabled) {
   background: var(--surface);
   color: var(--muted);
   font-weight: 500;
-  padding: 0.4rem 0.8rem;
+  padding: 0.35rem 0.8rem;
 }
 
 .order-toggle button[aria-pressed='true'] {
@@ -611,21 +663,153 @@ button.slot-tile:hover:not(:disabled) {
   color: var(--ink);
 }
 
-/* Reports */
-
-.report-toolbar {
+.logbook-controls {
   display: flex;
-  align-items: end;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.report-toolbar label {
-  width: 13rem;
+.day-cards {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.day-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.9rem;
+}
+
+.day-card.is-today {
+  border-color: var(--ink);
+}
+
+.day-card h3 span {
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 0.35rem;
+}
+
+.day-card-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+}
+
+.day-card-slots > div {
+  display: flex;
+  flex-direction: column;
+  padding: 0.4rem 0.6rem;
+  border-left: 4px solid var(--slot);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--slot) 7%, white);
+}
+
+.day-card-slots dt {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--slot) 55%, var(--ink));
+}
+
+.day-card-slots dd {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.logbook-wrap {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+.logbook {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.logbook th,
+.logbook td {
+  padding: 0.7rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.logbook tbody tr:last-child > * {
+  border-bottom: none;
+}
+
+.logbook thead th {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--bg);
+}
+
+.logbook thead th.slot-col {
+  color: color-mix(in srgb, var(--slot) 55%, var(--ink));
+  box-shadow: inset 0 3px 0 var(--slot);
+}
+
+.logbook .date-cell {
+  white-space: nowrap;
+  width: 9rem;
+}
+
+.logbook .date-cell span {
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 0.4rem;
+}
+
+.logbook tr.is-today .date-cell {
+  font-weight: 700;
+}
+
+.logbook .value-cell {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.value-button {
+  min-height: 2.25rem;
+  padding: 0.15rem 0.45rem;
+  margin: -0.15rem -0.45rem;
+  border: 1.5px solid transparent;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+  text-align: left;
+}
+
+.value-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--slot) 12%, white);
+  border-color: color-mix(in srgb, var(--slot) 45%, white);
+}
+
+.no-value {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* Reports */
+
+.report-toolbar .date-field {
+  max-width: 26rem;
 }
 
 .report-layout {
   display: grid;
-  grid-template-columns: 1.35fr 1fr;
   gap: 1rem;
 }
 
@@ -639,7 +823,7 @@ button.slot-tile:hover:not(:disabled) {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 1.25rem 1.5rem;
+  padding: 1.1rem;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
@@ -652,25 +836,36 @@ button.slot-tile:hover:not(:disabled) {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem 0.75rem;
   margin: 0;
 }
 
 .stats dt {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
 .stats dd {
   margin: 0;
-  font-size: 1.56rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1.2;
 }
 
+.stats dd small {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.stats .flag {
+  margin-left: 0.3rem;
+}
+
 .report-card.is-primary .stats dd {
-  font-size: 1.95rem;
+  font-size: 1.75rem;
 }
 
 .day-readings {
@@ -684,7 +879,7 @@ button.slot-tile:hover:not(:disabled) {
 .day-readings li {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 0.5rem;
   padding: 0.55rem 0.75rem;
   border-radius: 8px;
@@ -693,8 +888,35 @@ button.slot-tile:hover:not(:disabled) {
 }
 
 .day-readings strong {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   white-space: nowrap;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.1rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.chart-legend svg {
+  flex-shrink: 0;
+}
+
+.chart-legend .band-key {
+  width: 14px;
+  height: 12px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ok) 14%, white);
+  border: 1px solid color-mix(in srgb, var(--ok) 35%, white);
 }
 
 .chart-tooltip {
@@ -718,24 +940,21 @@ button.slot-tile:hover:not(:disabled) {
   gap: 1rem;
 }
 
-.chart-tooltip li span {
-  color: color-mix(in srgb, var(--slot) 60%, var(--ink));
-}
-
-/* People and notes */
+/* People lists and notes share one row pattern: content, then small actions */
 
 .people,
 .notes {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .people li {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.6rem;
   padding: 0.9rem 0;
   border-top: 1px solid var(--line);
 }
@@ -745,7 +964,7 @@ button.slot-tile:hover:not(:disabled) {
   padding-top: 0;
 }
 
-.people .person-name {
+.person-name {
   font-weight: 700;
   font-size: 1.05rem;
 }
@@ -767,38 +986,39 @@ button.slot-tile:hover:not(:disabled) {
 
 .inline-form {
   display: flex;
-  gap: 1rem;
-  align-items: end;
-  flex-wrap: wrap;
-}
-
-.inline-form label {
-  flex: 1;
-  min-width: 240px;
-}
-
-.notes {
-  display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.notes li {
+.notes {
+  gap: 0.75rem;
+}
+
+.note {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  padding: 1rem 1.1rem;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
   background: var(--bg);
   border-radius: 8px;
 }
 
-.notes p {
+.note p {
   white-space: pre-wrap;
   max-width: 70ch;
 }
 
-.notes small {
+.note-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.note-footer small {
   color: var(--muted);
+  font-size: 0.875rem;
 }
 
 .note-editor {
@@ -809,64 +1029,144 @@ button.slot-tile:hover:not(:disabled) {
 
 .note-editor textarea {
   resize: vertical;
-  min-height: 5rem;
+  min-height: 5.5rem;
 }
 
-@media (max-width: 820px) {
-  .report-layout {
-    grid-template-columns: 1fr;
+/* 640px and up: tablets and small laptops */
+
+@media (min-width: 640px) {
+  :root {
+    font-size: 17px;
+  }
+
+  h1 {
+    font-size: 1.95rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  .topbar {
+    display: flex;
+    gap: 2rem;
+    padding: 0 1.5rem;
+    min-height: 4rem;
+  }
+
+  .topbar nav {
+    flex: 1;
+    align-self: stretch;
+    gap: 1.5rem;
+  }
+
+  .topbar nav a {
+    min-height: auto;
+  }
+
+  .topbar-user span {
+    display: inline;
+  }
+
+  .page {
+    padding: 2rem 1.5rem 4rem;
+    gap: 2rem;
+  }
+
+  .panel,
+  .report-card {
+    padding: 1.4rem 1.5rem;
+  }
+
+  .auth-card form {
+    padding: 1.75rem;
+  }
+
+  .section-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .day-strip {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+
+  .slot-tile {
+    min-height: 8.5rem;
+    padding: 1rem 1.1rem;
+  }
+
+  .slot-tile-value {
+    font-size: 2.44rem;
   }
 
   .reading-form {
     grid-template-columns: 1fr 1fr;
+    align-items: start;
   }
 
-  .reading-form > button {
+  .reading-form .date-field {
     grid-column: 1 / -1;
   }
-}
 
-@media (max-width: 640px) {
-  :root {
-    font-size: 16px;
-  }
-
-  .topbar {
-    flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-    padding: 0.75rem 1rem 0;
-  }
-
-  .topbar-user {
-    margin-left: auto;
-  }
-
-  .topbar nav {
-    order: 3;
-    flex-basis: 100%;
-    min-height: 2.75rem;
-    overflow-x: auto;
-  }
-
-  .page {
-    padding: 1.25rem 1rem 3rem;
-    gap: 1.5rem;
-  }
-
-  .day-strip {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .slot-tile {
-    min-height: 7rem;
+  .reading-form > .form-error,
+  .reading-form-footer {
+    grid-column: 1 / -1;
   }
 
   .stats {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 
+  .day-cards {
+    display: none;
+  }
+
+  .logbook-wrap {
+    display: block;
+  }
+
+  .people li {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .inline-form {
+    flex-direction: row;
+    align-items: end;
+  }
+
+  .inline-form label {
+    flex: 1;
+  }
+}
+
+/* 960px and up: desktop */
+
+@media (min-width: 960px) {
   .reading-form {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1.4fr 1fr 0.9fr auto;
+  }
+
+  .reading-form .date-field {
+    grid-column: auto;
+  }
+
+  .reading-form > button[type='submit'] {
+    margin-top: 1.9rem;
+  }
+
+  .report-layout {
+    grid-template-columns: 1.35fr 1fr;
+  }
+
+  .report-side .stats {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -874,34 +1174,15 @@ button.slot-tile:hover:not(:disabled) {
   * {
     transition: none !important;
     animation: none !important;
+    scroll-behavior: auto !important;
   }
 }
 
-.chart-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
-  margin-top: 0.75rem;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
-.chart-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.chart-legend span::before {
-  content: '';
-  width: 14px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--slot);
-}
-
-.chart-legend .chart-legend-band::before {
-  height: 12px;
-  background: color-mix(in srgb, var(--ok) 14%, white);
-  border: 1px solid color-mix(in srgb, var(--ok) 30%, white);
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

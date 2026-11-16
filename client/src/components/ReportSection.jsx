@@ -4,6 +4,7 @@ import { todayIso } from '../constants';
 import ReportView from './ReportView';
 import MonthChart from './MonthChart';
 import FormError from './FormError';
+import DateField from './DateField';
 
 export default function ReportSection({ reportsPath, readingsPath }) {
   const [date, setDate] = useState(todayIso());
@@ -23,16 +24,13 @@ export default function ReportSection({ reportsPath, readingsPath }) {
   return (
     <>
       <div className="report-toolbar">
-        <label>
-          Report date
-          <input type="date" value={date} max={todayIso()} onChange={(event) => setDate(event.target.value)} />
-        </label>
+        <DateField label="Report date" value={date} onChange={setDate} stepper />
       </div>
       <FormError error={data.error} />
-      {data.report && <ReportView report={data.report} />}
+      {data.report ? <ReportView report={data.report} /> : !data.error && <p className="loading">Loading report…</p>}
       <section className="panel" aria-labelledby="chart-heading">
         <h2 id="chart-heading">Readings this month</h2>
-        {data.monthReadings && <MonthChart readings={data.monthReadings} to={date} />}
+        {data.monthReadings ? <MonthChart readings={data.monthReadings} to={date} /> : <div className="skeleton" aria-label="Loading chart" />}
       </section>
     </>
   );
