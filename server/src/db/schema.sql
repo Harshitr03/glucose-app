@@ -31,3 +31,14 @@ CREATE TABLE IF NOT EXISTS doctor_patients (
 );
 
 CREATE INDEX IF NOT EXISTS doctor_patients_patient_id_idx ON doctor_patients (patient_id);
+
+CREATE TABLE IF NOT EXISTS doctor_notes (
+  id         INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  doctor_id  INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  patient_id INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body       TEXT        NOT NULL CHECK (char_length(body) BETWEEN 1 AND 2000),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS doctor_notes_patient_id_idx ON doctor_notes (patient_id, created_at DESC);

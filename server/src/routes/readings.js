@@ -1,6 +1,7 @@
 const express = require('express');
 const { requireAuth, requireRole } = require('../middleware/auth');
-const { validateReading, validateListQuery, parseId } = require('../validation/readings');
+const { validateReading, validateListQuery } = require('../validation/readings');
+const { parseId } = require('../validation/common');
 const readingService = require('../services/readingService');
 
 const router = express.Router();

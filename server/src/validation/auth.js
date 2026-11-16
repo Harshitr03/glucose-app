@@ -40,4 +40,4 @@ function validateLogin(body = {}) {
   return { email, password };
 }
 
-module.exports = { validateRegister, validateLogin };
+module.exports = { validateRegister, validateLogin, validateEmail };

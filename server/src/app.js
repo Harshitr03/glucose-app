@@ -6,6 +6,8 @@ const HttpError = require('./utils/httpError');
 const authRoutes = require('./routes/auth');
 const readingRoutes = require('./routes/readings');
 const reportRoutes = require('./routes/reports');
+const careTeamRoutes = require('./routes/careTeam');
+const noteRoutes = require('./routes/notes');
 
 const app = express();
 
@@ -20,6 +22,8 @@ app.get('/api/health', async (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api', readingRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api', careTeamRoutes);
+app.use('/api', noteRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found.' });

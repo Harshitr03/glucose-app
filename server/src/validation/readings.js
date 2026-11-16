@@ -4,7 +4,7 @@ const { isValidIsoDate, todayIso } = require('../utils/dates');
 
 const MIN_VALUE = 40;
 const MAX_VALUE = 600;
-const MAX_PAGE_LIMIT = 100;
+const MAX_PAGE_LIMIT = 200;
 
 function parseValue(raw) {
   if (raw === undefined || raw === null || String(raw).trim() === '') {
@@ -54,11 +54,5 @@ function validateListQuery(query = {}) {
   return { from, to, page, limit };
 }
 
-function parseId(raw) {
-  if (raw === undefined || raw === '') throw new HttpError(400, 'Reading id is required.', 'id');
-  const id = Number(raw);
-  if (!Number.isInteger(id) || id < 1) throw new HttpError(404, 'Reading not found.');
-  return id;
-}
 
-module.exports = { validateReading, validateListQuery, parseId };
+module.exports = { validateReading, validateListQuery };
