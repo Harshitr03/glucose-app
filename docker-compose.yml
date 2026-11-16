@@ -1,0 +1,32 @@
+# Local PostgreSQL for Sweety.
+#   Start:  docker compose up -d
+#   Stop:   docker compose down        (data is kept in the named volume)
+#   Wipe:   docker compose down -v     (deletes all data)
+#
+# Creates two databases:
+#   sweety       – used by the app in development
+#   sweety_test  – used by the automated tests (created by the init script)
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: sweety-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sweety}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sweety}
+      POSTGRES_DB: ${POSTGRES_DB:-sweety}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Scripts in this folder run once, the first time the volume is created.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
