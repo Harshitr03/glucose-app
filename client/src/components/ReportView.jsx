@@ -1,5 +1,6 @@
 import { SLOTS, TARGET_RANGE, formatDate, rangeStatus } from '../constants';
 import RangeFlag from './RangeFlag';
+import SlotMarker from './SlotMarker';
 
 function rangeLabel({ from, to }) {
   return from === to ? formatDate(from) : `${formatDate(from)} – ${formatDate(to)}`;
@@ -63,8 +64,8 @@ function ReportCard({ title, summary, primary = false, emptyText, children }) {
   );
 }
 
-function slotColor(key) {
-  return SLOTS.find((slot) => slot.key === key)?.color;
+function slotFor(key) {
+  return SLOTS.find((slot) => slot.key === key);
 }
 
 export default function ReportView({ report }) {
@@ -74,15 +75,21 @@ export default function ReportView({ report }) {
       <ReportCard title="Daily" summary={daily} primary emptyText="No readings on this day.">
         {daily.readings.length > 0 && (
           <ul className="day-readings" aria-label="Readings on this day">
-            {daily.readings.map((reading) => (
-              <li key={reading.id} style={{ '--slot': slotColor(reading.slot) }}>
-                <span>{reading.slotLabel}</span>
-                <strong>
-                  {reading.value} mg/dl
-                  <RangeFlag status={rangeStatus(reading.value)} />
-                </strong>
-              </li>
-            ))}
+            {daily.readings.map((reading) => {
+              const slot = slotFor(reading.slot);
+              return (
+                <li key={reading.id} style={{ '--slot': slot.color }}>
+                  <span>
+                    <SlotMarker shape={slot.shape} color={slot.line} />
+                    {reading.slotLabel}
+                  </span>
+                  <strong>
+                    {reading.value} mg/dl
+                    <RangeFlag status={rangeStatus(reading.value)} />
+                  </strong>
+                </li>
+              );
+            })}
           </ul>
         )}
         <p className="subtle">

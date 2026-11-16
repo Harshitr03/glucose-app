@@ -1,5 +1,6 @@
 import { SLOTS, formatDayMonth, formatWeekday, rangeStatus, todayIso } from '../constants';
 import RangeFlag from './RangeFlag';
+import SlotMarker from './SlotMarker';
 
 function groupByDate(readings, order) {
   const byDate = new Map();
@@ -62,7 +63,10 @@ export default function Logbook({ readings, order = 'oldest', onSelect, emptyTex
             <dl className="day-card-slots">
               {SLOTS.map((slot) => (
                 <div key={slot.key} style={{ '--slot': slot.color }}>
-                  <dt>{slot.short}</dt>
+                  <dt>
+                    <SlotMarker shape={slot.shape} color={slot.line} size={10} />
+                    {slot.short}
+                  </dt>
                   <dd>
                     <Value reading={slots[slot.key]} slot={slot} onSelect={onSelect} />
                   </dd>

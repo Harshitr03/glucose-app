@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 import { ApiError } from '../api';
@@ -19,8 +19,8 @@ function renderForm(props = {}) {
     user,
     onSave,
     valueInput: screen.getByLabelText('Glucose (mg/dl)'),
-    dateInput: screen.getByLabelText('Date'),
-    slotSelect: screen.getByLabelText('Time slot'),
+    dateButton: screen.getByRole('button', { name: /^Date/ }),
+    slotGroup: screen.getByRole('radiogroup', { name: 'Time slot' }),
     submit: () => user.click(screen.getByRole('button', { name: 'Add reading' })),
   };
 }
@@ -66,20 +66,42 @@ describe('ReadingForm', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  test('shows the future date error', async () => {
-    const { user, submit, valueInput, dateInput } = renderForm();
+  test('the calendar picks a date and blocks future days', async () => {
+    const { user, submit, valueInput, dateButton, onSave } = renderForm();
+    const twoDaysAgo = shiftDay(todayIso(), -2);
+    const label = (iso) =>
+      new Date(`${iso}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 
-    fireEvent.change(dateInput, { target: { value: shiftDay(todayIso(), 1) } });
+    await user.click(dateButton);
+    const calendar = screen.getByRole('dialog', { name: 'Choose a date' });
+    if (shiftDay(todayIso(), 1).slice(0, 7) === todayIso().slice(0, 7)) {
+      expect(within(calendar).getByRole('button', { name: label(shiftDay(todayIso(), 1)) })).toBeDisabled();
+    }
+    if (twoDaysAgo.slice(0, 7) !== todayIso().slice(0, 7)) {
+      await user.click(within(calendar).getByRole('button', { name: 'Previous month' }));
+    }
+    await user.click(screen.getByRole('button', { name: label(twoDaysAgo) }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     await user.type(valueInput, '120');
     await submit();
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ date: twoDaysAgo }));
+  });
 
-    expect(screen.getByText('Date cannot be in the future.')).toBeInTheDocument();
+  test('Escape closes the calendar without changing the date', async () => {
+    const { user, dateButton } = renderForm();
+
+    await user.click(dateButton);
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(dateButton).toHaveFocus();
   });
 
   test('saves a valid reading as numbers and clears the value', async () => {
-    const { user, submit, valueInput, slotSelect, onSave } = renderForm();
+    const { user, submit, valueInput, onSave } = renderForm();
 
-    await user.selectOptions(slotSelect, 'after_lunch');
+    await user.click(screen.getByLabelText('After lunch'));
     await user.type(valueInput, '142');
     await submit();
 
@@ -100,13 +122,13 @@ describe('ReadingForm', () => {
   test('shows a duplicate-slot error from the server under the slot field', async () => {
     const message = 'You already have an After lunch reading for this date.';
     const onSave = vi.fn().mockRejectedValue(new ApiError(400, message, 'slot'));
-    const { user, submit, valueInput, slotSelect } = renderForm({ onSave });
+    const { user, submit, valueInput, slotGroup } = renderForm({ onSave });
 
     await user.type(valueInput, '150');
     await submit();
 
     expect(await screen.findByText(message)).toBeInTheDocument();
-    expect(slotSelect).toHaveAccessibleDescription(message);
+    expect(slotGroup).toHaveAccessibleDescription(message);
   });
 
   test('shows the daily limit error from the server for the whole form', async () => {
@@ -122,7 +144,7 @@ describe('ReadingForm', () => {
 
   test('starts from the preset slot when one is picked from the Today strip', () => {
     renderForm({ preset: { date: todayIso(), slot: 'after_dinner' } });
-    expect(screen.getByLabelText('Time slot')).toHaveValue('after_dinner');
+    expect(screen.getByLabelText('After dinner')).toBeChecked();
   });
 
   test('edit mode is filled in and offers save, cancel and delete', async () => {
@@ -134,7 +156,7 @@ describe('ReadingForm', () => {
     render(<ReadingForm reading={reading} onSave={onSave} onCancel={onCancel} onDelete={onDelete} />);
 
     expect(screen.getByLabelText('Glucose (mg/dl)')).toHaveValue(165);
-    expect(screen.getByLabelText('Time slot')).toHaveValue('after_breakfast');
+    expect(screen.getByLabelText('After breakfast')).toBeChecked();
 
     await user.clear(screen.getByLabelText('Glucose (mg/dl)'));
     await user.type(screen.getByLabelText('Glucose (mg/dl)'), '170');

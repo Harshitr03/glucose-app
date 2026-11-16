@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 import { SLOTS, todayIso } from '../constants';
 import FormError from './FormError';
 import DateField from './DateField';
+import SlotMarker from './SlotMarker';
 
 export function validateReading({ date, value }) {
   if (String(value).trim() === '') return { field: 'value', message: 'Please enter a glucose value.' };
@@ -66,18 +67,26 @@ export default function ReadingForm({ reading, preset, onSave, onCancel, onDelet
   return (
     <form className="reading-form" onSubmit={handleSubmit} noValidate aria-label={isEdit ? 'Edit reading' : 'Add reading'}>
       <DateField label="Date" value={form.date} onChange={(date) => setForm({ ...form, date })} error={fieldError('date')} />
-      <div className="field">
-        <label htmlFor={`${id}-slot`}>Time slot</label>
-        <select id={`${id}-slot`} value={form.slot} onChange={update('slot')} {...errorProps('slot')}>
+      <fieldset className="slot-picker" role="radiogroup" {...errorProps('slot')}>
+        <legend className="field-label">Time slot</legend>
+        <div className="slot-options">
           {SLOTS.map((slot) => (
-            <option key={slot.key} value={slot.key}>
+            <label key={slot.key} className="slot-option" style={{ '--slot': slot.color }}>
+              <input
+                type="radio"
+                name={`${id}-slot`}
+                value={slot.key}
+                checked={form.slot === slot.key}
+                onChange={update('slot')}
+              />
+              <SlotMarker shape={slot.shape} color={slot.line} />
               {slot.label}
-            </option>
+            </label>
           ))}
-        </select>
+        </div>
         {renderFieldError('slot')}
-      </div>
-      <div className="field">
+      </fieldset>
+      <div className="field value-field">
         <label htmlFor={`${id}-value`}>Glucose (mg/dl)</label>
         <input
           id={`${id}-value`}
