@@ -10,6 +10,7 @@
     "dev": "node --watch src/index.js",
     "db:migrate": "node scripts/migrate.js",
     "db:migrate:test": "NODE_ENV=test node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js",
     "test": "jest --runInBand"
   },
   "dependencies": {
