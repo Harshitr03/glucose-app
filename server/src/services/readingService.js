@@ -6,7 +6,9 @@ const UNIQUE_VIOLATION = '23505';
 const READING_COLUMNS = 'id, reading_date AS date, slot, value';
 
 function slotTakenError(slot) {
-  return new HttpError(400, `You already have an ${slotLabel(slot)} reading for this date.`, 'slot');
+  const label = slotLabel(slot);
+  const article = /^[aeiou]/i.test(label) ? 'an' : 'a';
+  return new HttpError(400, `You already have ${article} ${label} reading for this date.`, 'slot');
 }
 
 // Checking the day's count before the slot keeps "max 4 per day" reachable; with 4 slots a full day

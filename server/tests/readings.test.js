@@ -69,6 +69,12 @@ describe('daily limits', () => {
     expect(res.body.error).toBe('You already have an After lunch reading for this date.');
   });
 
+  test('uses "a" before a slot that starts with a consonant', async () => {
+    await addReading({ ...reading, slot: 'morning_fasting' });
+    const res = await addReading({ ...reading, slot: 'morning_fasting' });
+    expect(res.body.error).toBe('You already have a Morning (fasting) reading for this date.');
+  });
+
   test('allows the same slot on a different day', async () => {
     await addReading(reading);
     const res = await addReading({ ...reading, date: '2026-10-14' });
