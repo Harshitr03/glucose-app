@@ -37,7 +37,9 @@ describe('inviting a patient', () => {
     const doctors = await api.get('/api/doctors', patient.auth);
 
     expect(res.status).toBe(201);
-    expect(patients.body.patients).toEqual([{ id: patient.user.id, name: 'Asha', email: 'asha@example.com', status: 'pending' }]);
+    expect(patients.body.patients).toEqual([
+      { id: patient.user.id, name: 'Asha', email: 'asha@example.com', status: 'pending', lastReadingDate: null, recentCount: null, recentInRange: null },
+    ]);
     expect(doctors.body.doctors).toEqual([{ id: doctor.user.id, name: 'Dr Mehta', email: 'doc@example.com', status: 'pending' }]);
   });
 
@@ -101,6 +103,14 @@ describe('viewing a patient', () => {
 
     const res = await api.get(`/api/patient/readings?id=${patient.user.id}`, doctor.auth);
     expect(res.status).toBe(404);
+  });
+
+  test('the patient list shows recent activity once the link is accepted', async () => {
+    await linkAccepted();
+
+    const res = await api.get('/api/patients', doctor.auth);
+
+    expect(res.body.patients[0]).toMatchObject({ lastReadingDate: '2026-10-15' });
   });
 
   test('a doctor cannot change readings', async () => {

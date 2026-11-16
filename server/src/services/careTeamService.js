@@ -1,5 +1,8 @@
 const { query } = require('../db/pool');
 const HttpError = require('../utils/httpError');
+const { todayIso } = require('../utils/dates');
+
+const OVERVIEW_DAYS = 30;
 
 async function invitePatient(doctorId, email) {
   const { rows } = await query('SELECT id, name, email, role FROM users WHERE email = $1', [email]);
@@ -18,13 +21,25 @@ async function invitePatient(doctorId, email) {
   return { id: patient.id, name: patient.name, email: patient.email, status: inserted.rows[0].status };
 }
 
+// Stats are only filled in for accepted links, so a pending invite reveals nothing about the patient.
 async function listPatients(doctorId) {
   const { rows } = await query(
-    `SELECT u.id, u.name, u.email, dp.status
-     FROM doctor_patients dp JOIN users u ON u.id = dp.patient_id
+    `SELECT u.id, u.name, u.email, dp.status,
+            stats.last_date::text AS "lastReadingDate",
+            stats.recent_count AS "recentCount",
+            stats.recent_in_range AS "recentInRange"
+     FROM doctor_patients dp
+     JOIN users u ON u.id = dp.patient_id
+     LEFT JOIN LATERAL (
+       SELECT max(reading_date) AS last_date,
+              count(*) FILTER (WHERE reading_date > $2::date - $3::int)::int AS recent_count,
+              count(*) FILTER (WHERE reading_date > $2::date - $3::int AND value BETWEEN 70 AND 180)::int AS recent_in_range
+       FROM readings r
+       WHERE r.user_id = u.id
+     ) stats ON dp.status = 'accepted'
      WHERE dp.doctor_id = $1
      ORDER BY dp.status, u.name`,
-    [doctorId],
+    [doctorId, todayIso(), OVERVIEW_DAYS],
   );
   return rows;
 }
