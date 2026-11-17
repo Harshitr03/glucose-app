@@ -42,3 +42,14 @@ CREATE TABLE IF NOT EXISTS doctor_notes (
 );
 
 CREATE INDEX IF NOT EXISTS doctor_notes_patient_id_idx ON doctor_notes (patient_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS reminder_logs (
+  id             INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id        INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reminder_date  DATE        NOT NULL,
+  readings_count INTEGER     NOT NULL CHECK (readings_count BETWEEN 0 AND 3),
+  missing_slots  TEXT[]      NOT NULL,
+  dismissed_at   TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT reminder_logs_one_per_day UNIQUE (user_id, reminder_date)
+);

@@ -1670,6 +1670,48 @@ button.toast-close:hover:not(:disabled) {
   max-width: 62ch;
 }
 
+.reminder-banner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem 0.75rem;
+  align-items: start;
+  padding: 0.9rem 1rem;
+  background: color-mix(in srgb, var(--high) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--high) 30%, var(--line));
+  border-radius: var(--radius);
+}
+
+.reminder-banner > svg {
+  color: var(--high);
+  margin-top: 0.1rem;
+}
+
+.reminder-text h2 {
+  font-size: 1.05rem;
+}
+
+.reminder-text p {
+  margin-top: 0.15rem;
+}
+
+.reminder-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .reminder-banner {
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+  }
+
+  .reminder-actions {
+    grid-column: auto;
+  }
+}
+
 .people small.patient-activity {
   display: flex;
   flex-wrap: wrap;

@@ -27,6 +27,7 @@ A web app where a diabetes patient records up to 4 blood glucose readings a day 
 - **Bonus: chart** of readings with one line per slot (Recharts), for this month, the last 7 or 30 days, or a custom range of up to a year picked in a two-click range calendar.
 - **Bonus: Docker** setup for PostgreSQL and Redis in `docker-compose.yml`.
 - **Bonus: Redis caching** of report results, cleared whenever the user's readings change.
+- **Bonus: background job (BullMQ).** A worker runs every evening and logs a reminder for each patient with fewer than 4 readings that day, with the slots they missed. The patient sees it as a banner on the Readings page, with a button that opens the form on the missed date and slot.
 - **Bonus: frontend tests** for the reading form with Vitest and React Testing Library.
 - **Bonus: doctor role.** A doctor invites a patient by email, and the patient accepts in the app. The doctor can then view the patient's reports and readings, but not change them, and can add, edit and delete notes that the patient sees on their Reports page.
 
@@ -42,14 +43,17 @@ sweety/
 │   │   ├── services/         # database queries and business rules
 │   │   ├── validation/       # request validation with user-facing messages
 │   │   ├── middleware/       # requireAuth, requireRole
+│   │   ├── cache/            # Redis client and report cache
+│   │   ├── jobs/             # BullMQ queue and the daily reminder job
+│   │   ├── worker.js         # background worker process
 │   │   └── db/               # connection pool and schema.sql
-│   ├── scripts/              # migrate.js, seed.js
+│   ├── scripts/              # migrate.js, seed.js, runReminders.js
 │   └── tests/                # Jest + Supertest API tests
 ├── client/                   # React app (Vite)
 │   └── src/
 │       ├── pages/            # patient and doctor screens
 │       └── components/       # form, logbook, reports, chart, notes
-└── docs/                     # assignment brief, screenshots
+└── docs/                     # assignment brief
 ```
 
 ## Getting started
@@ -88,6 +92,7 @@ cp server/.env.example server/.env
 | `REDIS_URL` | Redis for the report cache. Optional: leave it out to turn caching off | `redis://localhost:6379/0` |
 | `TEST_REDIS_URL` | Redis database used by the tests (flushed before each test) | `redis://localhost:6379/1` |
 | `REPORT_CACHE_TTL_SECONDS` | How long a cached report lives | `3600` |
+| `REMINDER_CRON` | When the daily reminder job runs, in `APP_TIMEZONE` | `0 21 * * *` (9 pm) |
 
 The client needs no environment variables. In development, Vite forwards `/api` requests to `http://localhost:4000`.
 
@@ -133,6 +138,20 @@ npm --prefix server run dev
 ```
 
 The API runs at http://localhost:4000. `GET /api/health` returns `{"status":"ok"}` when it can reach the database.
+
+### Run the reminder worker (optional)
+
+The worker is a separate process that needs Redis. It registers the daily schedule and processes the jobs:
+
+```bash
+npm --prefix server run worker
+```
+
+To run the job now instead of waiting for 9 pm, queue one while the worker is running. The date is optional and defaults to today:
+
+```bash
+npm --prefix server run reminders:run -- 2026-11-16
+```
 
 ### Run the client
 
@@ -208,10 +227,8 @@ All endpoints except register, login and health need an `Authorization: Bearer <
 | POST | `/api/notes` | Doctor | Add a note `{ patientId, body }` |
 | PUT | `/api/note?id=` | Doctor | Edit own note |
 | DELETE | `/api/note?id=` | Doctor | Delete own note |
-
-## Screenshots
-
-Screenshots of the app are in [docs/screenshots](docs/screenshots).
+| GET | `/api/reminder` | Patient | Latest reminder from today or yesterday that still has missing slots, or `null` |
+| POST | `/api/reminder/dismiss?id=` | Patient | Hide a reminder |
 
 ## Notes
 
@@ -239,6 +256,12 @@ Screenshots of the app are in [docs/screenshots](docs/screenshots).
   - Reports are cached per user and date for an hour.
   - Each user has a version number in the cache key. Adding, editing or deleting a reading bumps it, so every cached report for that user is skipped at once. One reading can affect its own day, later days of that month and the next month's "previous month" summary, so this is simpler than finding each affected key.
   - If Redis is down, reports come straight from PostgreSQL. When Redis reconnects, all cached reports are cleared, because changes made during the outage could not bump versions.
+- **Daily reminders:**
+  - The job runs at 9 pm in `APP_TIMEZONE`, late enough to include after-dinner readings for most people.
+  - It writes to a `reminder_logs` table. The Readings page shows the latest reminder from today or yesterday as a banner.
+  - The banner's missing slots are recalculated from current readings, so it shrinks as the patient logs what they missed and disappears when the day is complete. Dismissing it hides it for good.
+  - `UNIQUE (user_id, reminder_date)` with `ON CONFLICT DO NOTHING` makes the job safe to retry or run twice.
+  - The schedule is registered with a fixed id, so restarting the worker or running several workers never creates duplicate schedules. Failed jobs retry 3 times with backoff.
 
 ### What I'd improve with more time
 
@@ -252,4 +275,6 @@ Screenshots of the app are in [docs/screenshots](docs/screenshots).
   - An audit log of who viewed which patient's data.
 - **Per-slot target ranges,** for example 80–130 fasting, and per-user time zones.
 - **The full app in Docker Compose,** plus CI that runs the tests on every push.
-- **The remaining bonus:** a BullMQ job for daily reminders.
+- **More reminder channels:**
+  - Web push notifications for patients who opt in. This means making Sweety an installable PWA with a service worker; on iPhone, push only works once it is added to the home screen.
+  - Email reminders through a provider, with Mailpit as a local inbox for development.

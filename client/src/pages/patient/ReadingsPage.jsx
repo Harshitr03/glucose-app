@@ -10,6 +10,7 @@ import Logbook from '../../components/Logbook';
 import MonthNav from '../../components/MonthNav';
 import OrderToggle from '../../components/OrderToggle';
 import FormError from '../../components/FormError';
+import ReminderBanner from '../../components/ReminderBanner';
 import useDocumentTitle from '../../useDocumentTitle';
 
 const MONTH_PATTERN = /^\d{4}-\d{2}$/;
@@ -27,6 +28,7 @@ export default function ReadingsPage() {
   const [todayReadings, setTodayReadings] = useState(null);
   const [monthReadings, setMonthReadings] = useState(null);
   const [hasAnyReadings, setHasAnyReadings] = useState(null);
+  const [reminder, setReminder] = useState(null);
   const [order, setOrder] = useState('oldest');
   const [editing, setEditing] = useState(null);
   const [preset, setPreset] = useState(null);
@@ -40,11 +42,13 @@ export default function ReadingsPage() {
       api(`/readings?from=${today}&to=${today}`),
       api(`/readings?from=${from}&to=${to}&limit=200`),
       api('/readings?limit=1'),
+      api('/reminder'),
     ])
-      .then(([todayData, monthData, anyData]) => {
+      .then(([todayData, monthData, anyData, reminderData]) => {
         setTodayReadings(todayData.readings);
         setMonthReadings(monthData.readings);
         setHasAnyReadings(anyData.total > 0);
+        setReminder(reminderData.reminder);
       })
       .catch(setError);
   }, [month, today]);
@@ -74,6 +78,22 @@ export default function ReadingsPage() {
     }
     setEditing(null);
     setPreset({ date: today, slot });
+  }
+
+  function logMissed(date, slot) {
+    setEditing(null);
+    setPreset({ date, slot });
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function dismissReminder(id) {
+    setReminder(null);
+    try {
+      await api(`/reminder/dismiss?id=${id}`, { method: 'POST' });
+    } catch (err) {
+      showToast(err.message);
+      load();
+    }
   }
 
   function resetForm() {
@@ -148,11 +168,13 @@ export default function ReadingsPage() {
         </section>
       )}
 
+      {reminder && <ReminderBanner reminder={reminder} onLog={logMissed} onDismiss={dismissReminder} />}
+
       <section className="section" aria-labelledby="today-heading">
         <h2 id="today-heading">Today</h2>
         <DayStrip
           readings={todayReadings ?? []}
-          selectedSlot={editing?.date === today ? editing.slot : preset?.slot}
+          selectedSlot={editing?.date === today ? editing.slot : preset?.date === today ? preset.slot : undefined}
           flashSlot={flashSlot}
           onPick={pickSlot}
         />

@@ -17,6 +17,12 @@ function toIso(year, monthIndex, day) {
   return new Date(Date.UTC(year, monthIndex, day)).toISOString().slice(0, 10);
 }
 
+function shiftIsoDay(iso, days) {
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 function reportRanges(date) {
   const [year, month] = date.split('-').map(Number);
   const monthIndex = month - 1;
@@ -28,4 +34,4 @@ function reportRanges(date) {
   };
 }
 
-module.exports = { isValidIsoDate, todayIso, reportRanges };
+module.exports = { isValidIsoDate, todayIso, shiftIsoDay, reportRanges };

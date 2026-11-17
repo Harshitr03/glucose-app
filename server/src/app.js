@@ -8,6 +8,7 @@ const readingRoutes = require('./routes/readings');
 const reportRoutes = require('./routes/reports');
 const careTeamRoutes = require('./routes/careTeam');
 const noteRoutes = require('./routes/notes');
+const reminderRoutes = require('./routes/reminders');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/api', readingRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api', careTeamRoutes);
 app.use('/api', noteRoutes);
+app.use('/api', reminderRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found.' });
