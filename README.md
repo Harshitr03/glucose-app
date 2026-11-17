@@ -266,6 +266,10 @@ All endpoints except register, login and health need an `Authorization: Bearer <
 | GET | `/api/reminder` | Patient | Latest reminder from today or yesterday that still has missing slots, or `null` |
 | POST | `/api/reminder/dismiss?id=` | Patient | Hide a reminder |
 
+## Screenshots
+
+Screenshots of every screen, on desktop and phone, are in this [Google Drive folder](https://drive.google.com/drive/folders/1LqUlFKBmD40rP1AP0DGbnOOYOYshIrzo?usp=drive_link): login, readings with the reminder banner, the logbook with sticky averages, reports, the custom chart range, and the doctor's views.
+
 ## Notes
 
 ### Assumptions
