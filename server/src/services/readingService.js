@@ -1,5 +1,6 @@
 const { query, withTransaction } = require('../db/pool');
 const HttpError = require('../utils/httpError');
+const { invalidateReports } = require('../cache/reportCache');
 const { SLOT_KEYS, MAX_READINGS_PER_DAY, slotLabel } = require('../constants/slots');
 
 const UNIQUE_VIOLATION = '23505';
@@ -63,6 +64,7 @@ async function createReading(userId, input) {
       );
       return rows[0];
     });
+    await invalidateReports(userId);
     return reading;
   } catch (err) {
     if (err.code === UNIQUE_VIOLATION) throw slotTakenError(input.slot);
@@ -85,6 +87,7 @@ async function updateReading(userId, id, input) {
       );
       return rows[0];
     });
+    await invalidateReports(userId);
     return reading;
   } catch (err) {
     if (err.code === UNIQUE_VIOLATION) throw slotTakenError(input.slot);
@@ -95,6 +98,7 @@ async function updateReading(userId, id, input) {
 async function deleteReading(userId, id) {
   const { rowCount } = await query('DELETE FROM readings WHERE id = $1 AND user_id = $2', [id, userId]);
   if (rowCount === 0) throw new HttpError(404, 'Reading not found.');
+  await invalidateReports(userId);
 }
 
 // Someone else's reading gets the same 404 as a missing one, so ids can't be probed.

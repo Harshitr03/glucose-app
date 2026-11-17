@@ -1,4 +1,5 @@
 const { query } = require('../db/pool');
+const { getCachedReport, cacheReport } = require('../cache/reportCache');
 const { reportRanges } = require('../utils/dates');
 const { SLOT_KEYS, slotLabel } = require('../constants/slots');
 
@@ -30,6 +31,14 @@ async function readingsForDay(userId, date) {
 }
 
 async function getReports(userId, date) {
+  const { key, report: cached } = await getCachedReport(userId, date);
+  if (cached) return cached;
+  const report = await buildReports(userId, date);
+  await cacheReport(key, report);
+  return report;
+}
+
+async function buildReports(userId, date) {
   const ranges = reportRanges(date);
   const [daily, readings, monthToDate, monthly] = await Promise.all([
     summarize(userId, ranges.daily),

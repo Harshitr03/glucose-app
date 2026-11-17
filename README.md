@@ -25,7 +25,8 @@ A web app where a diabetes patient records up to 4 blood glucose readings a day 
   - Doctors see each patient's last reading and 30-day in-range percentage.
 - **Bonus: pagination** on `GET /api/readings?page=1&limit=20`.
 - **Bonus: chart** of the month's readings with one line per slot (Recharts).
-- **Bonus: Docker** setup for PostgreSQL in `docker-compose.yml`.
+- **Bonus: Docker** setup for PostgreSQL and Redis in `docker-compose.yml`.
+- **Bonus: Redis caching** of report results, cleared whenever the user's readings change.
 - **Bonus: frontend tests** for the reading form with Vitest and React Testing Library.
 - **Bonus: doctor role.** A doctor invites a patient by email, and the patient accepts in the app. The doctor can then view the patient's reports and readings, but not change them, and can add, edit and delete notes that the patient sees on their Reports page.
 
@@ -33,7 +34,7 @@ A web app where a diabetes patient records up to 4 blood glucose readings a day 
 
 ```
 sweety/
-├── docker-compose.yml        # PostgreSQL for development and tests
+├── docker-compose.yml        # PostgreSQL and Redis for development and tests
 ├── docker/postgres/init/     # creates the sweety_test database
 ├── server/                   # Express API
 │   ├── src/
@@ -84,12 +85,15 @@ cp server/.env.example server/.env
 | `JWT_EXPIRES_IN` | How long a login lasts | `7d` |
 | `CLIENT_ORIGIN` | URL of the React app, allowed by CORS | `http://localhost:5173` |
 | `APP_TIMEZONE` | Time zone used to decide what "today" is | `Asia/Kolkata` |
+| `REDIS_URL` | Redis for the report cache. Optional: leave it out to turn caching off | `redis://localhost:6379/0` |
+| `TEST_REDIS_URL` | Redis database used by the tests (flushed before each test) | `redis://localhost:6379/1` |
+| `REPORT_CACHE_TTL_SECONDS` | How long a cached report lives | `3600` |
 
 The client needs no environment variables. In development, Vite forwards `/api` requests to `http://localhost:4000`.
 
 ### Database setup
 
-Start PostgreSQL. This creates the `sweety` database and, on first start, a second `sweety_test` database for the tests:
+Start PostgreSQL and Redis. This creates the `sweety` database and, on first start, a second `sweety_test` database for the tests:
 
 ```bash
 docker compose up -d
@@ -142,7 +146,7 @@ Open http://localhost:5173 and log in with a demo account, or sign up.
 
 ### Run the tests
 
-**API tests** (Jest + Supertest) use the `sweety_test` database and empty it before each test, so they never touch your development data.
+**API tests** (Jest + Supertest) use the `sweety_test` database and Redis database 1, and empty both before each test, so they never touch your development data. Redis must be running.
 
 ```bash
 npm --prefix server test
@@ -231,6 +235,10 @@ Screenshots of the app are in [docs/screenshots](docs/screenshots).
 - **The chart** covers the selected month, starting from the first reading in that month.
 - **Pagination** is available on the API, but the logbook loads one month at a time. A month has at most 124 readings, so the API's page limit allows up to 200.
 - **The login token** is stored in `localStorage`, which is simple but readable by any script running on the page.
+- **Report cache:**
+  - Reports are cached per user and date for an hour.
+  - Each user has a version number in the cache key. Adding, editing or deleting a reading bumps it, so every cached report for that user is skipped at once. One reading can affect its own day, later days of that month and the next month's "previous month" summary, so this is simpler than finding each affected key.
+  - If Redis is down, reports come straight from PostgreSQL. When Redis reconnects, all cached reports are cleared, because changes made during the outage could not bump versions.
 
 ### What I'd improve with more time
 
@@ -244,4 +252,4 @@ Screenshots of the app are in [docs/screenshots](docs/screenshots).
   - An audit log of who viewed which patient's data.
 - **Per-slot target ranges,** for example 80–130 fasting, and per-user time zones.
 - **The full app in Docker Compose,** plus CI that runs the tests on every push.
-- **The remaining bonuses:** Redis caching for reports and a BullMQ job for daily reminders.
+- **The remaining bonus:** a BullMQ job for daily reminders.
