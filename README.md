@@ -36,7 +36,7 @@ A web app where a diabetes patient records up to 4 blood glucose readings a day 
 ## Project layout
 
 ```
-sweety/
+glucose-app/
 ├── docker-compose.yml        # the full app; `db` and `redis` alone for development
 ├── docker/postgres/init/     # creates the sweety_test database
 ├── server/                   # Express API
