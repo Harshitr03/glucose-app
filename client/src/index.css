@@ -75,8 +75,6 @@ a {
   outline: none;
 }
 
-/* Form controls */
-
 label {
   display: flex;
   flex-direction: column;
@@ -148,8 +146,6 @@ textarea:focus {
   color: var(--ok);
   font-weight: 500;
 }
-
-/* Buttons: primary, secondary, danger, and a small size for row actions */
 
 button {
   font: inherit;
@@ -223,8 +219,6 @@ button.small {
   align-items: center;
   flex-wrap: wrap;
 }
-
-/* App shell */
 
 .topbar {
   display: grid;
@@ -354,8 +348,6 @@ button.small {
   color: var(--muted);
 }
 
-/* Auth */
-
 .auth-page {
   min-height: 100vh;
   display: grid;
@@ -423,8 +415,6 @@ button.small {
   accent-color: var(--primary);
 }
 
-/* Today strip: the four slots of a day, morning to night */
-
 .day-strip {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -489,8 +479,6 @@ button.slot-tile:hover:not(:disabled) {
   color: var(--primary);
 }
 
-/* Reading form */
-
 .reading-form {
   display: grid;
   gap: 1rem;
@@ -512,8 +500,6 @@ button.slot-tile:hover:not(:disabled) {
   gap: 0.75rem;
   flex-wrap: wrap;
 }
-
-/* Date field: a button showing the date in words that opens a month calendar */
 
 .date-field {
   display: flex;
@@ -702,8 +688,6 @@ button.calendar-day.is-range-end {
   min-height: 2.5rem;
 }
 
-/* Slot picker: four radio buttons styled as choices, each with its slot marker */
-
 .slot-picker {
   border: none;
   padding: 0;
@@ -797,8 +781,6 @@ button.calendar-day.is-range-end {
   color: var(--primary-strong);
 }
 
-/* Range flags and tinted values */
-
 .flag {
   display: inline-block;
   font-size: 0.8125rem;
@@ -827,8 +809,6 @@ button.calendar-day.is-range-end {
 .value-low {
   color: var(--low);
 }
-
-/* Logbook: day cards on phones, a date-by-slot table from 640px */
 
 .month-nav {
   display: flex;
@@ -1117,8 +1097,6 @@ button.calendar-day.is-range-end {
   font-weight: 400;
 }
 
-/* Reports */
-
 .report-toolbar .date-field {
   max-width: 26rem;
 }
@@ -1260,8 +1238,6 @@ button.calendar-day.is-range-end {
   gap: 1rem;
 }
 
-/* People lists and notes share one row pattern: content, then small actions */
-
 .people,
 .notes {
   list-style: none;
@@ -1352,8 +1328,6 @@ button.calendar-day.is-range-end {
   resize: vertical;
   min-height: 5.5rem;
 }
-
-/* 640px and up: tablets and small laptops */
 
 @media (min-width: 640px) {
   :root {
@@ -1517,8 +1491,6 @@ button.calendar-day.is-range-end {
   }
 }
 
-/* 960px and up: desktop */
-
 @media (min-width: 960px) {
 
   .report-layout {
@@ -1546,8 +1518,6 @@ button.calendar-day.is-range-end {
   clip-path: inset(50%);
   white-space: nowrap;
 }
-
-/* Toasts and confirm dialog */
 
 .toast-region {
   position: fixed;
