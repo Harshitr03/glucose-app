@@ -1,4 +1,4 @@
-const { query } = require('../db/pool');
+const { query, withTransaction } = require('../db/pool');
 const HttpError = require('../utils/httpError');
 const { SLOT_KEYS, MAX_READINGS_PER_DAY, slotLabel } = require('../constants/slots');
 
@@ -13,8 +13,8 @@ function slotTakenError(slot) {
 
 // Checking the day's count before the slot keeps "max 4 per day" reachable; with 4 slots a full day
 // would otherwise always hit the slot error first.
-async function assertCanUseSlot(userId, { date, slot }, excludeId = null) {
-  const { rows } = await query(
+async function assertCanUseSlot(db, userId, { date, slot }, excludeId = null) {
+  const { rows } = await db.query(
     `SELECT slot FROM readings
      WHERE user_id = $1 AND reading_date = $2 AND ($3::int IS NULL OR id <> $3)`,
     [userId, date, excludeId],
@@ -45,16 +45,25 @@ async function listReadings(userId, { from, to, page = 1, limit = 20 } = {}) {
   return { readings: list.rows, page, limit, total: count.rows[0].total };
 }
 
+// Serialises one user's writes so a concurrent request can't slip in between the count check and the write.
+function lockUserReadings(db, userId) {
+  return db.query('SELECT pg_advisory_xact_lock($1)', [userId]);
+}
+
 async function createReading(userId, input) {
-  await assertCanUseSlot(userId, input);
   try {
-    const { rows } = await query(
-      `INSERT INTO readings (user_id, reading_date, slot, value)
-       VALUES ($1, $2, $3, $4)
-       RETURNING ${READING_COLUMNS}`,
-      [userId, input.date, input.slot, input.value],
-    );
-    return rows[0];
+    const reading = await withTransaction(async (db) => {
+      await lockUserReadings(db, userId);
+      await assertCanUseSlot(db, userId, input);
+      const { rows } = await db.query(
+        `INSERT INTO readings (user_id, reading_date, slot, value)
+         VALUES ($1, $2, $3, $4)
+         RETURNING ${READING_COLUMNS}`,
+        [userId, input.date, input.slot, input.value],
+      );
+      return rows[0];
+    });
+    return reading;
   } catch (err) {
     if (err.code === UNIQUE_VIOLATION) throw slotTakenError(input.slot);
     throw err;
@@ -63,16 +72,20 @@ async function createReading(userId, input) {
 
 async function updateReading(userId, id, input) {
   await findOwnedReading(userId, id);
-  await assertCanUseSlot(userId, input, id);
   try {
-    const { rows } = await query(
-      `UPDATE readings
-       SET reading_date = $3, slot = $4, value = $5, updated_at = now()
-       WHERE id = $1 AND user_id = $2
-       RETURNING ${READING_COLUMNS}`,
-      [id, userId, input.date, input.slot, input.value],
-    );
-    return rows[0];
+    const reading = await withTransaction(async (db) => {
+      await lockUserReadings(db, userId);
+      await assertCanUseSlot(db, userId, input, id);
+      const { rows } = await db.query(
+        `UPDATE readings
+         SET reading_date = $3, slot = $4, value = $5, updated_at = now()
+         WHERE id = $1 AND user_id = $2
+         RETURNING ${READING_COLUMNS}`,
+        [id, userId, input.date, input.slot, input.value],
+      );
+      return rows[0];
+    });
+    return reading;
   } catch (err) {
     if (err.code === UNIQUE_VIOLATION) throw slotTakenError(input.slot);
     throw err;

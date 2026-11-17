@@ -90,6 +90,22 @@ describe('daily limits', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('You can add only 4 readings per day.');
   });
+
+  test('saves only one of several simultaneous requests for the same slot', async () => {
+    const results = await Promise.all(Array.from({ length: 5 }, () => addReading(reading)));
+    const statuses = results.map((res) => res.status).sort();
+
+    expect(statuses).toEqual([201, 400, 400, 400, 400]);
+    for (const res of results.filter((r) => r.status === 400)) {
+      expect(res.body.error).toBe('You already have an After lunch reading for this date.');
+    }
+  });
+
+  test('saves simultaneous requests for different slots', async () => {
+    const slots = ['morning_fasting', 'after_breakfast', 'after_lunch', 'after_dinner'];
+    const results = await Promise.all(slots.map((slot) => addReading({ ...reading, slot })));
+    expect(results.map((res) => res.status)).toEqual([201, 201, 201, 201]);
+  });
 });
 
 describe('PUT /api/reading?id=', () => {
