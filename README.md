@@ -99,7 +99,7 @@ The rest of this section sets up the app for development, with the API and clien
 ### Install
 
 ```bash
-git clone <repo-url> sweety
+git clone https://github.com/Harshitr03/glucose-app.git sweety
 cd sweety
 npm install --prefix server
 npm install --prefix client
