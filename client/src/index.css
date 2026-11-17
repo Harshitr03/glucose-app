@@ -70,6 +70,11 @@ a {
   outline-offset: 2px;
 }
 
+/* Recharts makes its SVG layers focusable, and the browser rings them on plain mouse clicks. */
+.recharts-wrapper :focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* Form controls */
 
 label {
@@ -649,6 +654,54 @@ button.calendar-day.is-selected:hover:not(:disabled) {
   opacity: 1;
 }
 
+/* Range mode: in-between days form one continuous band, so the grid has no column gap there */
+
+.calendar.is-range .calendar-grid {
+  column-gap: 0;
+}
+
+.calendar-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+button.calendar-day.is-in-range,
+button.calendar-day.is-in-range:hover:not(:disabled) {
+  background: var(--sage);
+  border-radius: 0;
+}
+
+button.calendar-day.is-range-start {
+  border-radius: 999px 0 0 999px;
+}
+
+button.calendar-day.is-range-end {
+  border-radius: 0 999px 999px 0;
+}
+
+.chart-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-controls .order-toggle {
+  display: flex;
+  width: 100%;
+}
+
+.chart-controls .order-toggle button {
+  flex: 1 1 auto;
+  padding-inline: 0.45rem;
+  font-size: 0.875rem;
+}
+
+.date-range-field .date-trigger {
+  min-height: 2.5rem;
+}
+
 /* Slot picker: four radio buttons styled as choices, each with its slot marker */
 
 .slot-picker {
@@ -804,6 +857,7 @@ button.calendar-day.is-selected:hover:not(:disabled) {
   color: var(--muted);
   font-weight: 500;
   padding: 0.35rem 0.8rem;
+  white-space: nowrap;
 }
 
 .order-toggle button[aria-pressed='true'] {
@@ -880,6 +934,63 @@ button.calendar-day.is-selected:hover:not(:disabled) {
   font-weight: 700;
 }
 
+.logbook-averages {
+  position: sticky;
+  bottom: 0.5rem;
+  z-index: 2;
+  margin-top: 0.6rem;
+  padding: 0.65rem 0.9rem 0.75rem;
+  background: var(--sage);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--line));
+  border-radius: var(--radius);
+  box-shadow: 0 -6px 16px rgb(23 35 28 / 8%);
+}
+
+.logbook-averages h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 1rem;
+}
+
+.logbook-averages h3 > span:last-child {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.logbook-averages dl {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+  margin: 0.45rem 0 0;
+}
+
+.logbook-averages dl > div {
+  padding: 0.3rem 0.45rem;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--slot) 12%, white);
+}
+
+.logbook-averages dt {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--slot) 55%, var(--ink));
+}
+
+.logbook-averages dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.logbook-averages .flag {
+  display: none;
+}
+
 .logbook-wrap {
   display: none;
   background: var(--surface);
@@ -904,11 +1015,39 @@ button.calendar-day.is-selected:hover:not(:disabled) {
   border-bottom: none;
 }
 
-.logbook tbody tr:last-child > :first-child {
+/* Like the header, the footer sticks because the wrapper has no overflow. */
+.logbook tfoot th,
+.logbook tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  border-bottom: none;
+  border-top: 1.5px solid color-mix(in srgb, var(--primary) 30%, var(--line));
+  background: var(--sage);
+  vertical-align: top;
+}
+
+.logbook tfoot small {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.logbook tfoot .date-cell .foot-label {
+  display: block;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.logbook tfoot th:first-child {
   border-bottom-left-radius: var(--radius);
 }
 
-.logbook tbody tr:last-child > :last-child {
+.logbook tfoot td:last-child {
   border-bottom-right-radius: var(--radius);
 }
 
@@ -1271,6 +1410,30 @@ button.calendar-day.is-selected:hover:not(:disabled) {
     flex-wrap: wrap;
   }
 
+  .chart-controls .calendar {
+    left: auto;
+    right: 0;
+  }
+
+  .section-header:has(.chart-controls) {
+    align-items: flex-start;
+  }
+
+  .chart-controls {
+    flex-direction: column;
+    align-items: flex-end;
+    margin-left: auto;
+  }
+
+  .chart-controls .order-toggle {
+    width: auto;
+  }
+
+  .chart-controls .order-toggle button {
+    padding-inline: 0.8rem;
+    font-size: 1rem;
+  }
+
   .day-strip {
     grid-template-columns: repeat(4, 1fr);
     gap: 0.75rem;
@@ -1328,7 +1491,8 @@ button.calendar-day.is-selected:hover:not(:disabled) {
     grid-template-columns: repeat(4, 1fr);
   }
 
-  .day-cards {
+  .day-cards,
+  .logbook-averages {
     display: none;
   }
 

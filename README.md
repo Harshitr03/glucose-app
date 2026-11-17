@@ -24,7 +24,7 @@ A web app where a diabetes patient records up to 4 blood glucose readings a day 
   - A welcome message for new patients.
   - Doctors see each patient's last reading and 30-day in-range percentage.
 - **Bonus: pagination** on `GET /api/readings?page=1&limit=20`.
-- **Bonus: chart** of the month's readings with one line per slot (Recharts).
+- **Bonus: chart** of readings with one line per slot (Recharts), for this month, the last 7 or 30 days, or a custom range of up to a year picked in a two-click range calendar.
 - **Bonus: Docker** setup for PostgreSQL and Redis in `docker-compose.yml`.
 - **Bonus: Redis caching** of report results, cleared whenever the user's readings change.
 - **Bonus: frontend tests** for the reading form with Vitest and React Testing Library.

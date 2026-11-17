@@ -3,7 +3,7 @@ import { formatMonth, shiftDay, shiftMonth, todayIso } from '../constants';
 import Chevron from './Chevron';
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-
+export const MAX_RANGE_DAYS = 366;
 
 function formatLong(iso) {
   if (!iso) return 'Choose a date';
@@ -13,6 +13,23 @@ function formatLong(iso) {
     month: 'short',
     year: 'numeric',
   });
+}
+
+function formatShort(iso, withYear) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    ...(withYear && { year: 'numeric' }),
+  });
+}
+
+export function formatRange({ from, to }) {
+  if (from === to) return formatShort(to, true);
+  return `${formatShort(from, from.slice(0, 4) !== to.slice(0, 4))} – ${formatShort(to, true)}`;
+}
+
+function ordered(a, b) {
+  return a <= b ? [a, b] : [b, a];
 }
 
 function monthCells(month) {
@@ -36,11 +53,33 @@ function CalendarIcon() {
   );
 }
 
-function Calendar({ value, onSelect, onClose }) {
+function Calendar({ value, range, onSelect, onClose }) {
   const today = todayIso();
-  const [focused, setFocused] = useState(value || today);
-  const [month, setMonth] = useState((value || today).slice(0, 7));
+  const initial = range ? range.to : value || today;
+  const [focused, setFocused] = useState(initial);
+  const [month, setMonth] = useState(initial.slice(0, 7));
+  const [rangeStart, setRangeStart] = useState(null);
+  const [hovered, setHovered] = useState(null);
   const gridRef = useRef(null);
+  const [shownFrom, shownTo] = rangeStart
+    ? ordered(rangeStart, hovered ?? focused)
+    : range
+      ? [range.from, range.to]
+      : [null, null];
+
+  function isOutOfReach(date) {
+    if (date > today) return true;
+    if (!rangeStart) return false;
+    const [from, to] = ordered(rangeStart, date);
+    return shiftDay(from, MAX_RANGE_DAYS - 1) < to;
+  }
+
+  function pick(date) {
+    if (!range) return onSelect(date);
+    if (!rangeStart) return setRangeStart(date);
+    const [from, to] = ordered(rangeStart, date);
+    onSelect({ from, to });
+  }
 
   useEffect(() => {
     gridRef.current?.querySelector(`[data-date="${focused}"]`)?.focus();
@@ -48,7 +87,7 @@ function Calendar({ value, onSelect, onClose }) {
 
   function moveFocus(delta) {
     const next = shiftDay(focused, delta);
-    if (next > today) return;
+    if (isOutOfReach(next)) return;
     setFocused(next);
     setMonth(next.slice(0, 7));
   }
@@ -58,7 +97,8 @@ function Calendar({ value, onSelect, onClose }) {
     const day = Math.min(Number(focused.slice(8, 10)), monthCells(nextMonth).filter(Boolean).length);
     const candidate = `${nextMonth}-${String(day).padStart(2, '0')}`;
     setMonth(nextMonth);
-    setFocused(candidate > today ? today : candidate);
+    if (!isOutOfReach(candidate)) setFocused(candidate);
+    else if (candidate > today) setFocused(today);
   }
 
   function handleKeyDown(event) {
@@ -78,7 +118,12 @@ function Calendar({ value, onSelect, onClose }) {
   const canGoForward = month < today.slice(0, 7);
 
   return (
-    <div className="calendar" role="dialog" aria-label="Choose a date" onKeyDown={handleKeyDown}>
+    <div
+      className={`calendar${range ? ' is-range' : ''}`}
+      role="dialog"
+      aria-label={range ? 'Choose a date range' : 'Choose a date'}
+      onKeyDown={handleKeyDown}
+    >
       <div className="calendar-header">
         <button type="button" className="calendar-nav" onClick={() => changeMonth(-1)} aria-label="Previous month">
           <Chevron direction="left" />
@@ -88,7 +133,12 @@ function Calendar({ value, onSelect, onClose }) {
           <Chevron direction="right" />
         </button>
       </div>
-      <div className="calendar-grid" ref={gridRef}>
+      {range && (
+        <p className="calendar-hint" aria-live="polite">
+          {rangeStart ? `From ${formatShort(rangeStart)}. Now pick the end date.` : 'Pick the start date.'}
+        </p>
+      )}
+      <div className="calendar-grid" ref={gridRef} onMouseLeave={() => setHovered(null)}>
         {WEEKDAYS.map((day) => (
           <span key={day} className="calendar-weekday" aria-hidden="true">
             {day}
@@ -100,14 +150,23 @@ function Calendar({ value, onSelect, onClose }) {
               key={date}
               type="button"
               data-date={date}
-              className={['calendar-day', date === value && 'is-selected', date === today && 'is-today']
+              className={[
+                'calendar-day',
+                (range ? date === shownFrom || date === shownTo : date === value) && 'is-selected',
+                range && date > shownFrom && date < shownTo && 'is-in-range',
+                range && shownFrom !== shownTo && date === shownFrom && 'is-range-start',
+                range && shownFrom !== shownTo && date === shownTo && 'is-range-end',
+                date === today && 'is-today',
+              ]
                 .filter(Boolean)
                 .join(' ')}
               tabIndex={date === focused ? 0 : -1}
-              disabled={date > today}
-              aria-pressed={date === value}
+              disabled={isOutOfReach(date)}
+              aria-pressed={range ? date >= shownFrom && date <= shownTo : date === value}
               aria-label={formatLong(date)}
-              onClick={() => onSelect(date)}
+              onClick={() => pick(date)}
+              onMouseEnter={() => setHovered(date)}
+              onFocus={() => setHovered(null)}
             >
               {Number(date.slice(8, 10))}
             </button>
@@ -120,18 +179,10 @@ function Calendar({ value, onSelect, onClose }) {
   );
 }
 
-export default function DateField({ label, value, onChange, error, stepper = false }) {
-  const id = useId();
-  const labelId = `${id}-label`;
-  const valueId = `${id}-value`;
-  const errorId = `${id}-error`;
-  const [open, setOpen] = useState(false);
+function usePopover(initiallyOpen = false) {
+  const [open, setOpen] = useState(initiallyOpen);
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
-  const today = todayIso();
-  const yesterday = shiftDay(today, -1);
-  const canGoForward = value && value < today;
-  const invalid = Boolean(error);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -146,6 +197,57 @@ export default function DateField({ label, value, onChange, error, stepper = fal
     setOpen(false);
     triggerRef.current?.focus();
   }
+
+  return { open, setOpen, close, containerRef, triggerRef };
+}
+
+export function DateRangeField({ label, value, onChange, openOnMount = false }) {
+  const id = useId();
+  const { open, setOpen, close, containerRef, triggerRef } = usePopover(openOnMount);
+
+  return (
+    <div className="date-field date-range-field" ref={containerRef}>
+      <span className="visually-hidden" id={`${id}-label`}>
+        {label}
+      </span>
+      <div className="date-trigger-wrap">
+        <button
+          type="button"
+          ref={triggerRef}
+          className="date-trigger"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-labelledby={`${id}-label ${id}-value`}
+          onClick={() => setOpen((isOpen) => !isOpen)}
+        >
+          <CalendarIcon />
+          <span id={`${id}-value`}>{formatRange(value)}</span>
+        </button>
+        {open && (
+          <Calendar
+            range={value}
+            onSelect={(nextRange) => {
+              onChange(nextRange);
+              close();
+            }}
+            onClose={close}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function DateField({ label, value, onChange, error, stepper = false }) {
+  const id = useId();
+  const labelId = `${id}-label`;
+  const valueId = `${id}-value`;
+  const errorId = `${id}-error`;
+  const { open, setOpen, close, containerRef, triggerRef } = usePopover();
+  const today = todayIso();
+  const yesterday = shiftDay(today, -1);
+  const canGoForward = value && value < today;
+  const invalid = Boolean(error);
 
   function select(date) {
     onChange(date);
