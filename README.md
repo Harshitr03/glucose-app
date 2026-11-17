@@ -2,7 +2,9 @@
 
 A web app where a diabetes patient records up to 4 blood glucose readings a day and views daily, month-to-date and monthly reports. Patients can share their reports with a doctor, who can view them read-only and leave notes.
 
-**Stack:** Node.js + Express 5, PostgreSQL 17, React 19 (Vite), plain CSS. The assignment brief is in [docs/ASSIGNMENT.md](docs/ASSIGNMENT.md).
+**Stack:** Node.js + Express 5, PostgreSQL 17, Redis 8 (report cache) with BullMQ (background jobs), React 19 (Vite) with Recharts, plain CSS, and Docker Compose. The assignment brief is in [docs/ASSIGNMENT.md](docs/ASSIGNMENT.md).
+
+**Try it:** `docker compose up -d --build`, then open http://localhost:8080 and log in as `demo.patient@sweety.test` / `demo1234`. See [Quick start with Docker](#quick-start-with-docker).
 
 ## Features
 
@@ -25,7 +27,7 @@ A web app where a diabetes patient records up to 4 blood glucose readings a day 
   - Doctors see each patient's last reading and 30-day in-range percentage.
 - **Bonus: pagination** on `GET /api/readings?page=1&limit=20`.
 - **Bonus: chart** of readings with one line per slot (Recharts), for this month, the last 7 or 30 days, or a custom range of up to a year picked in a two-click range calendar.
-- **Bonus: Docker** setup for PostgreSQL and Redis in `docker-compose.yml`.
+- **Bonus: Docker.** `docker compose up` starts the whole app: PostgreSQL, Redis, the API, the reminder worker and the web client, with the database migrated and seeded on first run.
 - **Bonus: Redis caching** of report results, cleared whenever the user's readings change.
 - **Bonus: background job (BullMQ).** A worker runs every evening and logs a reminder for each patient with fewer than 4 readings that day, with the slots they missed. The patient sees it as a banner on the Readings page, with a button that opens the form on the missed date and slot.
 - **Bonus: frontend tests** for the reading form with Vitest and React Testing Library.
@@ -35,7 +37,7 @@ A web app where a diabetes patient records up to 4 blood glucose readings a day 
 
 ```
 sweety/
-├── docker-compose.yml        # PostgreSQL and Redis for development and tests
+├── docker-compose.yml        # the full app; `db` and `redis` alone for development
 ├── docker/postgres/init/     # creates the sweety_test database
 ├── server/                   # Express API
 │   ├── src/
@@ -47,7 +49,7 @@ sweety/
 │   │   ├── jobs/             # BullMQ queue and the daily reminder job
 │   │   ├── worker.js         # background worker process
 │   │   └── db/               # connection pool and schema.sql
-│   ├── scripts/              # migrate.js, seed.js, runReminders.js
+│   ├── scripts/              # migrate.js, seed.js, setup.js, runReminders.js
 │   └── tests/                # Jest + Supertest API tests
 ├── client/                   # React app (Vite)
 │   └── src/
@@ -62,6 +64,37 @@ sweety/
 
 - Node.js 20.19 or newer (developed on Node 26)
 - Docker, for PostgreSQL. A local PostgreSQL 14+ also works; see [Database setup](#database-setup).
+
+### Quick start with Docker
+
+Only Docker is needed:
+
+```bash
+docker compose up -d --build
+```
+
+Open http://localhost:8080 and log in with a [demo account](#seed-demo-data).
+
+This starts six services:
+
+| Service | What it does |
+|---|---|
+| `db` | PostgreSQL 17, with a volume for the data |
+| `redis` | Redis 8 with append-only persistence, for the report cache and the job queue |
+| `setup` | Runs once: creates or updates the tables, and seeds the demo data if the database is empty |
+| `api` | The Express API, started after `setup` succeeds |
+| `worker` | The BullMQ reminder worker |
+| `web` | The built React app served by nginx, which forwards `/api` to the API |
+
+Compose settings are listed in the root [`.env.example`](.env.example); every one has a default. Copy it to `.env` to change them, for example `WEB_PORT` to use another port, and always set your own `JWT_SECRET` before deploying anywhere real. `docker compose logs web` prints the app's address. To queue the reminder job by hand:
+
+```bash
+docker compose exec worker node scripts/runReminders.js
+```
+
+`docker compose down` stops everything and keeps the data; `docker compose down -v` also deletes it.
+
+The rest of this section sets up the app for development, with the API and client running on your machine.
 
 ### Install
 
@@ -98,10 +131,10 @@ The client needs no environment variables. In development, Vite forwards `/api` 
 
 ### Database setup
 
-Start PostgreSQL and Redis. This creates the `sweety` database and, on first start, a second `sweety_test` database for the tests:
+Start only PostgreSQL and Redis. This creates the `sweety` database and, on first start, a second `sweety_test` database for the tests:
 
 ```bash
-docker compose up -d
+docker compose up -d db redis
 ```
 
 Create the tables in both databases:
@@ -171,7 +204,7 @@ Open http://localhost:5173 and log in with a demo account, or sign up.
 npm --prefix server test
 ```
 
-The 65 tests cover:
+The 88 tests cover:
 - sign up and login
 - every reading validation rule
 - the daily limits
@@ -182,6 +215,9 @@ The 65 tests cover:
 - doctor access rules
 - notes
 - the seed script
+- the report cache and its invalidation
+- simultaneous writes under the daily limits
+- the daily reminder job and the reminder API
 
 **Frontend tests** (Vitest + React Testing Library) need no database or server:
 
@@ -274,7 +310,7 @@ All endpoints except register, login and health need an `Authorization: Bearer <
   - Structured prescriptions (drug, dose, frequency) instead of free-text notes.
   - An audit log of who viewed which patient's data.
 - **Per-slot target ranges,** for example 80–130 fasting, and per-user time zones.
-- **The full app in Docker Compose,** plus CI that runs the tests on every push.
+- **CI** that runs the tests on every push.
 - **More reminder channels:**
   - Web push notifications for patients who opt in. This means making Sweety an installable PWA with a service worker; on iPhone, push only works once it is added to the home screen.
   - Email reminders through a provider, with Mailpit as a local inbox for development.

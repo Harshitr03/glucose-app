@@ -1,3 +1,13 @@
+x-server: &server
+  build: ./server
+  restart: unless-stopped
+  environment:
+    DATABASE_URL: postgres://${POSTGRES_USER:-sweety}:${POSTGRES_PASSWORD:-sweety}@db:5432/${POSTGRES_DB:-sweety}
+    REDIS_URL: redis://redis:6379/0
+    JWT_SECRET: ${JWT_SECRET:-local-docker-secret-change-me-for-production}
+    APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Kolkata}
+    CLIENT_ORIGIN: http://localhost:${WEB_PORT:-8080}
+
 services:
   db:
     image: postgres:17-alpine
@@ -23,6 +33,10 @@ services:
     image: redis:8-alpine
     container_name: sweety-redis
     restart: unless-stopped
+    # AOF so queued and scheduled BullMQ jobs survive a crash or restart.
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
     ports:
       - "${REDIS_PORT:-6379}:6379"
     healthcheck:
@@ -31,5 +45,52 @@ services:
       timeout: 3s
       retries: 10
 
+  setup:
+    <<: *server
+    container_name: sweety-setup
+    restart: "no"
+    command: ["node", "scripts/setup.js"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *server
+    container_name: sweety-api
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker:
+    <<: *server
+    container_name: sweety-worker
+    command: ["node", "src/worker.js"]
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  web:
+    build: ./client
+    container_name: sweety-web
+    restart: unless-stopped
+    environment:
+      WEB_PORT: ${WEB_PORT:-8080}
+      NGINX_ENTRYPOINT_QUIET_LOGS: 1
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   pgdata:
+  redisdata:
